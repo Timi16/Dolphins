@@ -71,7 +71,7 @@ function getDailyReward() {
         return;
     }
 
-    fetch('http://127.0.0.1:5000/api/rewards/daily-reward', {
+    fetch('https://dolphins-ai6u.onrender.com/api/rewards/daily-reward', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -105,7 +105,7 @@ function earnReward(task, amount) {
         return;
     }
 
-    fetch('https://dolphins-ai6u.onrender.co/api/rewards/complete-task', {
+    fetch('https://dolphins-ai6u.onrender.com/api/rewards/complete-task', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
