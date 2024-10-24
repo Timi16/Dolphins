@@ -1,7 +1,7 @@
 window.onload = function() {
 
     // Fetch user data and update score
-    fetch(`http://127.0.0.1:5000/api/rewards/user/${username}`)
+    fetch(`https://dolphins-ai6u.onrender.com/api/rewards/user/${username}`)
         .then(response => response.json())
         .then(data => {
             if (data.score) {
@@ -142,7 +142,7 @@ function generateInviteLink() {
         return;
     }
 
-    fetch(`http://127.0.0.1:5000/api/rewards/generate-invite/${username}`)
+    fetch(`https://dolphins-ai6u.onrender.com/api/rewards/generate-invite/${username}`)
     .then(response => response.json())
     .then(data => {
         const inviteLink = data.inviteLink;
@@ -186,7 +186,7 @@ function trackReferral(inviteCode) {
         return;
     }
 
-    fetch(`http://127.0.0.1:5000/api/rewards/referral/${inviteCode}`, {
+    fetch(`https://dolphins-ai6u.onrender.com/api/rewards/referral/${inviteCode}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

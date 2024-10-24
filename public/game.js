@@ -216,7 +216,7 @@ if (!username) {
 // Add function to save game score to database
 async function saveGameScore(gameScore) {
     try {
-        const response = await fetch('http://127.0.0.1:5000/api/rewards/update-game-score', {
+        const response = await fetch('https://dolphins-ai6u.onrender.com/api/rewards/update-game-score', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

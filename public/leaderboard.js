@@ -18,7 +18,7 @@ window.onload = function() {
     }
 
     // Fetch user data for the highlighted section
-    fetch(`http://127.0.0.1:5000/api/rewards/user/${username}`)
+    fetch(`https://dolphins-ai6u.onrender.com/api/rewards/user/${username}`)
     .then(response => response.json())
     .then(data => {
         if (data.username && data.score) {
@@ -41,7 +41,7 @@ window.onload = function() {
     });
 
     // Fetch the leaderboard data
-    fetch('http://127.0.0.1:5000/api/rewards/leaderboard')
+    fetch('https://dolphins-ai6u.onrender.com/api/rewards/leaderboard')
     .then(response => response.json())
     .then(data => {
         const leaderboardList = document.getElementById('leaderboard-list');
@@ -66,7 +66,7 @@ window.onload = function() {
         console.error('Error fetching leaderboard data:', error);
     });
      // Fetch the holders count
-    fetch('http://127.0.0.1:5000/api/rewards/holdersCount') // Update this URL according to your API
+    fetch('https://dolphins-ai6u.onrender.com/api/rewards/holdersCount') // Update this URL according to your API
     .then(response => response.json())
     .then(data => {
         document.getElementById('holdersCount').textContent = `${data.holdersCount.toLocaleString()} holders`;
