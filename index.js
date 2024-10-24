@@ -24,8 +24,8 @@ const userRoutes = require('./routes/userRoutes');
 
 app.use(express.static('public'));
 // Routes Middleware
-app.use('/api/user', userRoutes);
-app.use('/api/rewards', rewardRoutes);
+app.use('api/user', userRoutes);
+app.use('api/rewards', rewardRoutes);
 
 // Server Listening
 const PORT = process.env.PORT || 5000;
