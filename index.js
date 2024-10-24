@@ -24,7 +24,7 @@ const userRoutes = require('./routes/userRoutes');
 
 app.use(express.static('public'));
 // Routes Middleware
-app.use('/api/users', userRoutes);
+app.use('/api/user', userRoutes);
 app.use('/api/rewards', rewardRoutes);
 
 // Server Listening
