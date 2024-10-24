@@ -6,8 +6,10 @@ window.onload = function () {
         handleInviteCode(inviteCode);
     }
 
-    // Call function to display invited friends on page load
     displayInvitedFriends();
+
+    // Attach event listener to the button
+    document.getElementById('invite-link').addEventListener('click', generateInviteLink);
 };
 
 function handleInviteCode(inviteCode) {
@@ -48,12 +50,14 @@ function generateInviteLink() {
         .then((data) => {
             const inviteLink = data.inviteLink;
 
-            navigator.clipboard.writeText(inviteLink).then(() => {
-                alert('Invite link copied to clipboard!');
-            }, (err) => {
-                console.error('Could not copy text: ', err);
-                alert('Failed to copy invite link. Please try again.');
-            });
+            navigator.clipboard.writeText(inviteLink)
+                .then(() => {
+                    alert('Invite link copied to clipboard!');
+                })
+                .catch((err) => {
+                    console.error('Could not copy text: ', err);
+                    alert('Failed to copy invite link. Please try again.');
+                });
         })
         .catch((error) => {
             console.error('Error:', error);
@@ -72,17 +76,14 @@ function displayInvitedFriends() {
     fetch(`https://dolphins-ai6u.onrender.com/api/rewards/referrals/${username}`)
         .then((response) => response.json())
         .then((data) => {
-            const friendsList = data.referredUsers;
-            const friendCount = friendsList.length;  // Get the number of referred friends
+            const friendsList = data.referredUsers || [];
+            const friendCount = friendsList.length;
             const friendListContainer = document.getElementById('invited-friends-list');
             const friendCountContainer = document.querySelector('.friend-count');
-            
-            friendListContainer.innerHTML = '';
 
-            // Update the friend count display
+            friendListContainer.innerHTML = '';
             friendCountContainer.textContent = `${friendCount} friend${friendCount === 1 ? '' : 's'}`;
 
-            // Render each referred friend in the list
             friendsList.forEach((friend) => {
                 const listItem = document.createElement('li');
                 listItem.classList.add('friend-item');
