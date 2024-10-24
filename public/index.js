@@ -1,5 +1,10 @@
 window.onload = function() {
+    const username = localStorage.getItem('username');
 
+    if (!username) {
+        alert('User not logged in.');
+        return;
+    }
     // Fetch user data and update score
     fetch(`https://dolphins-ai6u.onrender.com/api/rewards/user/${username}`)
         .then(response => response.json())
@@ -100,7 +105,7 @@ function earnReward(task, amount) {
         return;
     }
 
-    fetch('http://127.0.0.1:5000/api/rewards/complete-task', {
+    fetch('https://dolphins-ai6u.onrender.co/api/rewards/complete-task', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
