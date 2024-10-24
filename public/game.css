@@ -1,1 +1,164 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
 
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: black;
+    cursor: pointer;
+    width: 100vw;
+    height: 100vh;
+    position: fixed;
+    font-family: Arial, sans-serif;
+  }
+  
+  #game-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+  }
+  
+  .ball {
+    position: absolute;
+    border-radius: 50%;
+    cursor: pointer;
+    transform-origin: center;
+    pointer-events: auto;
+    -webkit-tap-highlight-color: transparent;
+    padding: 10px;
+    margin: -10px;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+    transition: transform 0.1s ease-out;
+  }
+  
+  .ball:hover {
+    transform: scale(1.1);
+  }
+  
+  .ball:active {
+    transform: scale(0.95);
+  }
+  
+  #pause-btn {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid white;
+    color: white;
+    padding: 5px 15px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 16px;
+    z-index: 1000;
+    transition: background 0.3s;
+  }
+
+  #pause-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+
+  #pause-btn::before {
+    content: "||";
+    display: inline-block;
+    font-family: monospace;
+    font-weight: bold;
+  }
+
+  #pause-btn.paused::before {
+    content: "▶";
+  }
+  
+  .menu-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+  }
+
+  .menu-content {
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid white;
+    border-radius: 15px;
+    padding: 30px;
+    text-align: center;
+    color: white;
+    backdrop-filter: blur(5px);
+  }
+
+  .menu-content h2 {
+    margin-bottom: 20px;
+    font-size: 24px;
+  }
+
+  .menu-content p {
+    margin-bottom: 30px;
+    font-size: 18px;
+  }
+
+  .menu-btn {
+    background: transparent;
+    border: 2px solid white;
+    color: white;
+    padding: 10px 25px;
+    margin: 0 10px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.3s;
+  }
+
+  .menu-btn:hover {
+    background: white;
+    color: black;
+  }
+  
+  @media (max-width: 768px) {
+    .ball {
+      width: 50px !important;
+      height: 50px !important;
+    }
+  }
+  
+  @media (min-width: 769px) and (max-width: 1024px) {
+    .ball {
+      width: 60px !important;
+      height: 60px !important;
+    }
+  }
+  
+  @media (min-width: 1025px) {
+    .ball {
+      width: 55px !important;
+      height: 55px !important;
+    }
+  }
+  
+  #score, #timer {
+    position: fixed;
+    color: white;
+    font-size: clamp(16px, 4vw, 24px);
+    z-index: 1000;
+    pointer-events: none;
+    text-shadow: 2px 2px 2px rgba(0,0,0,0.5);
+  }
+
+  #score {
+    top: 20px;
+    left: 20px;
+  }
+
+  #timer {
+    top: 20px;
+    right: 20px;
+  }
