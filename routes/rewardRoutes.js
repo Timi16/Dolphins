@@ -70,7 +70,7 @@ router.get('/generate-invite/:username', async (req, res) => {
         await user.save();
 
         // Construct the invite link directly to work.html
-        const inviteLink = `${req.protocol}://${req.get('host')}/work.html?inviteCode=${inviteCode}`;
+        const inviteLink = `${req.protocol}://${req.get('host')}/index.html?inviteCode=${inviteCode}`;
 
         res.json({ inviteLink });
     } catch (err) {

@@ -1,10 +1,4 @@
 window.onload = function() {
-    const username = localStorage.getItem('username');
-
-    if (!username) {
-        alert('User not logged in.');
-        return;
-    }
 
     // Fetch user data and update score
     fetch(`http://127.0.0.1:5000/api/rewards/user/${username}`)

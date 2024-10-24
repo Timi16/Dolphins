@@ -3,24 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" type="text/css" href="friend.css">
-    <title>Dolphins App - Invite Friends</title>
+    <link rel="stylesheet" type="text/css" href="index.css">
+    <title>Dolphins App</title>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <span>Dolphins</span>
+            <span>Dolphin 🐬</span>
             <span>...</span>
         </div>
-        <h1 class="invite-title">Invite friends and get more Dolphins</h1>
-        <div class="dog-icon">🐬</div>
-        <div class="friend-count">0 friends</div>
-        <ul id="invited-friends-list" class="friend-list"></ul>
-
-        <button class="invite-button" id="invite-link" onclick="generateInviteLink()">Invite friends</button>
-    </div>
+        <div class="score">
+            <span id="score-value"></span> Dolphins
+        </div>
+        <div class="card">
+            <p>Play Dolphin Game</p>
+            <button id="play-game-button" class="button" onclick="startGame()">Play Game</button>
+        </div>
+        <div class="card">
+            <p>Watch Ads</p>
+            <button id="watch-ads-button" class="button" onclick="watchAds()">Watch</button>
+        </div>
+        <h3>Tasks</h3>
+        <div class="task">
+            <span>Get Daily Reward</span>
+            <button id="daily-reward-button" class="button" onclick="getDailyReward()">Collect</button>
+        </div>
+        <div class="task">
+            <span>Make a TON Transaction</span>
+            <button id="reward-button" class="button" onclick="earnReward('ton_transaction', 200)">Start</button>
+        </div>
+        <div class="task">
+            <span>Subscribe To Mouse</span>
+            <button id="subscribe-mouse-button" class="button" onclick="earnReward('subscribe_mouse', 150)">Start</button>
+        </div>
+        <div class="task">
+            <span>Invite 5 friends to Dolphins</span>
+            <button id="invite-friends-button" class="button" onclick="generateInviteLink()">Get Link</button>
+        </div>
     <nav class="nav-bar">
-        <a href="home.html" class="nav-item">
+        <a href="home.html" class="nav-item active">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
             </svg>
@@ -32,13 +53,13 @@
             </svg>
             Leaderboard
         </a>
-        <a href="leaderboard.html" class="nav-item active">
+        <a href="friends.html" class="nav-item">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
             Friends
         </a>
     </nav>
-    <script src="friend.js"></script>
+    <script src="index.js"></script>
 </body>
 </html>

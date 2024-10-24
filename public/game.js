@@ -193,7 +193,7 @@
   playAgainBtn.addEventListener('click', resetGame);
   exitGameBtn.addEventListener('click', () => {
     saveGameScore(score).then(() => {
-        window.location.href = 'index.html';
+        window.location.href = 'home.html';
     });
 });
   // Start game
@@ -210,8 +210,7 @@
 // Get username from localStorage
 const username = localStorage.getItem('username');
 if (!username) {
-    alert('User not logged in.');
-    window.location.href = 'index.html';
+    window.location.href = 'home.html';
 }
 
 // Add function to save game score to database

@@ -3,63 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" type="text/css" href="index.css">
-    <title>Dolphins App</title>
+    <title>User Registration</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <span>Dolphin 🐬</span>
-            <span>...</span>
+        <div class="form-box">
+            <h2>Enter Username</h2>
+            <form id="registrationForm">
+                <input type="text" id="username" placeholder="Username" required>
+                <button type="submit">Continue</button>
+            </form>
         </div>
-        <div class="score">
-            <span id="score-value"></span> Dolphins
-        </div>
-        <div class="card">
-            <p>Play Dolphin Game</p>
-            <button id="play-game-button" class="button" onclick="startGame()">Play Game</button>
-        </div>
-        <div class="card">
-            <p>Watch Ads</p>
-            <button id="watch-ads-button" class="button" onclick="watchAds()">Watch</button>
-        </div>
-        <h3>Tasks</h3>
-        <div class="task">
-            <span>Get Daily Reward</span>
-            <button id="daily-reward-button" class="button" onclick="getDailyReward()">Collect</button>
-        </div>
-        <div class="task">
-            <span>Make a TON Transaction</span>
-            <button id="reward-button" class="button" onclick="earnReward('ton_transaction', 200)">Start</button>
-        </div>
-        <div class="task">
-            <span>Subscribe To Mouse</span>
-            <button id="subscribe-mouse-button" class="button" onclick="earnReward('subscribe_mouse', 150)">Start</button>
-        </div>
-        <div class="task">
-            <span>Invite 5 friends to Dolphins</span>
-            <button id="invite-friends-button" class="button" onclick="generateInviteLink()">Get Link</button>
-        </div>
-    <nav class="nav-bar">
-        <a href="index.html" class="nav-item active">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-            </svg>
-            Home
-        </a>
-        <a href="leaderboard.html" class="nav-item">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-            Leaderboard
-        </a>
-        <a href="friends.html" class="nav-item">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-            Friends
-        </a>
-    </nav>
-    <script src="index.js"></script>
+    </div>
+
+    <script>
+        let inviteCode = null;
+
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            inviteCode = urlParams.get('inviteCode');
+            if (inviteCode) {
+                console.log('Invite code detected:', inviteCode);
+            }
+        };
+
+        document.getElementById('registrationForm').addEventListener('submit', async function(event) {
+            event.preventDefault();  // Prevent form from submitting the traditional way
+
+            const username = document.getElementById('username').value.trim(); // Trim whitespace
+            if (username === "") {
+                alert("Please enter a username.");
+                return;
+            }
+
+            localStorage.setItem('username', username); // Store username in localStorage
+
+            try {
+                const response = await fetch('http://127.0.0.1:5000/api/user/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, inviteCode })  // Include inviteCode in the request
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    // User registered successfully
+                    alert('Registration successful!');
+                    
+                    // Process the invite code if present
+                    if (inviteCode) {
+                        await processInviteCode(inviteCode, username);
+                    }
+                    
+                    // Redirect to index.html
+                    window.location.href = 'index.html';
+                } else {
+                    // Handle errors (e.g., user already exists)
+                    alert(data.message || 'An error occurred.'); // Use a fallback error message
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('There was an error with the registration process.');
+            }
+        });
+
+        async function processInviteCode(inviteCode, username) {
+            try {
+                const response = await fetch(`http://127.0.0.1:5000/api/rewards/referral/${inviteCode}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username }),
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    alert(data.message); // Show success message for referral
+                } else {
+                    console.error('Error processing invite code:', data.message);
+                    alert(data.message || 'Failed to process invite code.'); // Use a fallback error message
+                }
+            } catch (error) {
+                console.error('Error processing invite code:', error);
+                alert('There was an error processing the invite code.');
+            }
+        }
+    </script>
 </body>
 </html>

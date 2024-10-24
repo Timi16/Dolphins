@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const TelegramSchema = new mongoose.Schema({
     username: { type: String, required: true, unique: true },
+    telegramId: { type: String, required: true, unique: true },
     score: { type: Number },  // Remove the default value
     completedTasks: { type: [String], default: [] },
     dailyRewardCollected: { type: Boolean, default: false },
