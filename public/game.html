@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" type="text/css" href="game.css">
+</head>
+<body>
+  <div id="game-container">
+    <button id="pause-btn"></button>
+    <div id="score">Score: 0</div>
+    <div id="timer">5:00</div>
+  </div>
+
+  <div class="menu-overlay">
+    <div class="menu-content">
+      <h2>Game Over!</h2>
+      <p>Final Score: <span id="final-score">0</span></p>
+      <button class="menu-btn" id="play-again">Play Again</button>
+      <button class="menu-btn" id="exit-game">Exit</button>
+    </div>
+  </div>
+  <script src="game.js"></script>
+</body>
+</html>
