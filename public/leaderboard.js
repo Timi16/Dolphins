@@ -24,7 +24,7 @@ window.onload = function() {
         if (data.username && data.score) {
             // Set username and score
             document.getElementById('displayUsername').textContent = data.username;
-            document.getElementById('displayScore').textContent = `${data.score} DOGS`;
+            document.getElementById('displayScore').textContent = `${data.score} Dolphins`;
 
             // Display first two letters of the username in the avatar
             const avatarText = data.username.slice(0, 2).toUpperCase();
@@ -56,7 +56,7 @@ window.onload = function() {
                 <div class="user-avatar" style="background-color: ${getRandomColor()}">${user.username.slice(0, 2).toUpperCase()}</div>
                 <div class="user-info">
                     <div class="user-name">${user.username}</div>
-                    <div class="user-score">${user.score.toLocaleString()} DOGS</div>
+                    <div class="user-score">${user.score.toLocaleString()} Dolphins</div>
                 </div>
             `;
             leaderboardList.appendChild(listItem);
