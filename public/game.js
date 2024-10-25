@@ -1,4 +1,3 @@
-
   let score = 0;
   let isGameOver = false;
   let isPaused = false;
