@@ -3,7 +3,7 @@ const router = express.Router();
 const User = require('../models/User');
 
 // Update score when a task is completed
-router.post('/complete-task', async (req, res) => {
+router.post('/complete-task',authenticateJWT, async (req, res) => {
     const { username, task, amount } = req.body;
 
     try {
@@ -26,7 +26,7 @@ router.post('/complete-task', async (req, res) => {
 });
 
 // Get daily reward
-router.post('/daily-reward', async (req, res) => {
+router.post('/daily-reward',authenticateJWT, async (req, res) => {
     const { username } = req.body;
     const dailyRewardAmount = 500;
 
@@ -54,7 +54,7 @@ router.post('/daily-reward', async (req, res) => {
 });
 
 // Generate invite link
-router.get('/generate-invite/:username', async (req, res) => {
+router.get('/generate-invite/:username',authenticateJWT, async (req, res) => {
     const { username } = req.params;
 
     try {
@@ -79,12 +79,30 @@ router.get('/generate-invite/:username', async (req, res) => {
     }
 });
 
+const authenticateJWT = (req, res, next) => {
+    const token = req.headers['authorization'];
+
+    if (token) {
+        jwt.verify(token, JWT_SECRET, (err, user) => {
+            if (err) {
+                return res.sendStatus(403); // Forbidden
+            }
+            req.user = user;
+            next();
+        });
+    } else {
+        res.sendStatus(401); // Unauthorized
+    }
+};
 // Get user score and tasks
-router.get('/user/:username', async (req, res) => {
+router.get('/user/:username',authenticateJWT, async (req, res) => {
     const { username } = req.params;
+    console.log(`Received username: ${username}`); // Debugging line
 
     try {
         const user = await User.findOne({ username });
+        console.log(`User found: ${user}`); // Debugging line
+
         if (!user) return res.status(404).json({ message: 'User not found' });
 
         return res.json({
@@ -99,8 +117,9 @@ router.get('/user/:username', async (req, res) => {
     }
 });
 
+
 // Get leaderboard data
-router.get('/leaderboard', async (req, res) => {
+router.get('/leaderboard',authenticateJWT, async (req, res) => {
     try {
         const leaderboard = await User.find().sort({ score: -1 }).limit(10);
         const leaderboardData = leaderboard.map((user, index) => ({
@@ -117,7 +136,7 @@ router.get('/leaderboard', async (req, res) => {
 });
 
 // Get total number of users
-router.get('/holdersCount', async (req, res) => {
+router.get('/holdersCount',authenticateJWT, async (req, res) => {
     try {
         const count = await User.countDocuments();
         res.json({ holdersCount: count });
@@ -128,7 +147,7 @@ router.get('/holdersCount', async (req, res) => {
 });
 
 // Modify the existing referral route
-router.post('/referral/:inviteCode', async (req, res) => {
+router.post('/referral/:inviteCode',authenticateJWT, async (req, res) => {
     const { inviteCode } = req.params;
     const { username } = req.body;
 
@@ -177,7 +196,7 @@ router.post('/referral/:inviteCode', async (req, res) => {
 });
 
 // Get the list and count of referred users
-router.get('/referrals/:username', async (req, res) => {
+router.get('/referrals/:username',authenticateJWT, async (req, res) => {
     const { username } = req.params;
 
     try {
@@ -199,7 +218,7 @@ router.get('/referrals/:username', async (req, res) => {
 });
 
 // Update game score
-router.post('/update-game-score', async (req, res) => {
+router.post('/update-game-score',authenticateJWT, async (req, res) => {
     const { username, gameScore } = req.body;
 
     try {
