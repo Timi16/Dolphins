@@ -1,12 +1,17 @@
 window.onload = function() {
     const username = localStorage.getItem('username');
-
-    if (!username) {
+    const token = localStorage.getItem('token'); // Get token from local storage
+    if (!username || !token) {
         alert('User not logged in.');
         return;
     }
     // Fetch user data and update score
-    fetch(`https://dolphins-ai6u.onrender.com/api/rewards/user/${username}`)
+    fetch(`https://dolphins-ai6u.onrender.com/api/rewards/user/${username}`, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}` // Include token in headers
+        }
+    })
         .then(response => response.json())
         .then(data => {
             if (data.score) {
@@ -65,8 +70,8 @@ function watchAds() {
 
 function getDailyReward() {
     const username = localStorage.getItem('username');
-
-    if (!username) {
+    const token = localStorage.getItem('token'); // Get token from local storage
+    if (!username || !token) {
         alert('User not logged in.');
         return;
     }
@@ -74,7 +79,7 @@ function getDailyReward() {
     fetch('https://dolphins-ai6u.onrender.com/api/rewards/daily-reward', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
+             'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ username }),
     })
@@ -99,8 +104,8 @@ function getDailyReward() {
 
 function earnReward(task, amount) {
     const username = localStorage.getItem('username');
-
-    if (!username) {
+    const token = localStorage.getItem('token'); // Get token from local storage
+    if (!username || !token) {
         alert('User not logged in.');
         return;
     }
@@ -108,7 +113,7 @@ function earnReward(task, amount) {
     fetch('https://dolphins-ai6u.onrender.com/api/rewards/complete-task', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
+             'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ username, task, amount }),
     })
@@ -141,13 +146,18 @@ function earnReward(task, amount) {
 
 function generateInviteLink() {
     const username = localStorage.getItem('username');
-
-    if (!username) {
+    const token = localStorage.getItem('token'); // Get token from local storage
+    if (!username || !token) {
         alert('User not logged in.');
         return;
     }
 
-    fetch(`https://dolphins-ai6u.onrender.com/api/rewards/generate-invite/${username}`)
+    fetch(`https://dolphins-ai6u.onrender.com/api/rewards/generate-invite/${username}`,{
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}` // Include token in headers
+        }
+    })
     .then(response => response.json())
     .then(data => {
         const inviteLink = data.inviteLink;
@@ -185,8 +195,8 @@ function saveCompletionStatus(task) {
 
 function trackReferral(inviteCode) {
     const username = localStorage.getItem('username');
-
-    if (!username) {
+    const token = localStorage.getItem('token'); // Get token from local storage
+    if (!username || !token) {
         alert('User not logged in.');
         return;
     }
@@ -194,7 +204,7 @@ function trackReferral(inviteCode) {
     fetch(`https://dolphins-ai6u.onrender.com/api/rewards/referral/${inviteCode}`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ username }),
     })

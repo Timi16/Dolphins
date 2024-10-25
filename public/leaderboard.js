@@ -11,14 +11,20 @@ function getRandomColor() {
 // Fetch the user data and leaderboard from the API
 window.onload = function() {
     const username = localStorage.getItem('username');
+    const token = localStorage.getItem('token'); // Get token from local storage
 
-    if (!username) {
+    if (!username || !token) {
         alert('User not logged in.');
         return;
     }
 
     // Fetch user data for the highlighted section
-    fetch(`https://dolphins-ai6u.onrender.com/api/rewards/user/${username}`)
+    fetch(`https://dolphins-ai6u.onrender.com/api/rewards/user/${username}`, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}` // Include token in headers
+        }
+    })
     .then(response => response.json())
     .then(data => {
         if (data.username && data.score) {
@@ -41,7 +47,12 @@ window.onload = function() {
     });
 
     // Fetch the leaderboard data
-    fetch('https://dolphins-ai6u.onrender.com/api/rewards/leaderboard')
+    fetch('https://dolphins-ai6u.onrender.com/api/rewards/leaderboard', {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}` // Include token in headers
+        }
+    })
     .then(response => response.json())
     .then(data => {
         const leaderboardList = document.getElementById('leaderboard-list');
@@ -65,8 +76,14 @@ window.onload = function() {
     .catch(error => {
         console.error('Error fetching leaderboard data:', error);
     });
-     // Fetch the holders count
-    fetch('https://dolphins-ai6u.onrender.com/api/rewards/holdersCount') // Update this URL according to your API
+
+    // Fetch the holders count
+    fetch('https://dolphins-ai6u.onrender.com/api/rewards/holdersCount', {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}` // Include token in headers
+        }
+    })
     .then(response => response.json())
     .then(data => {
         document.getElementById('holdersCount').textContent = `${data.holdersCount.toLocaleString()} holders`;
@@ -76,4 +93,3 @@ window.onload = function() {
         document.getElementById('holdersCount').textContent = 'Error fetching holders count';
     });
 };
-
