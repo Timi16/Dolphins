@@ -1,7 +1,21 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
+const authenticateJWT = (req, res, next) => {
+    const token = req.headers['authorization'];
 
+    if (token) {
+        jwt.verify(token, JWT_SECRET, (err, user) => {
+            if (err) {
+                return res.sendStatus(403); // Forbidden
+            }
+            req.user = user;
+            next();
+        });
+    } else {
+        res.sendStatus(401); // Unauthorized
+    }
+};
 // Update score when a task is completed
 router.post('/complete-task',authenticateJWT, async (req, res) => {
     const { username, task, amount } = req.body;
@@ -79,21 +93,6 @@ router.get('/generate-invite/:username',authenticateJWT, async (req, res) => {
     }
 });
 
-const authenticateJWT = (req, res, next) => {
-    const token = req.headers['authorization'];
-
-    if (token) {
-        jwt.verify(token, JWT_SECRET, (err, user) => {
-            if (err) {
-                return res.sendStatus(403); // Forbidden
-            }
-            req.user = user;
-            next();
-        });
-    } else {
-        res.sendStatus(401); // Unauthorized
-    }
-};
 // Get user score and tasks
 router.get('/user/:username',authenticateJWT, async (req, res) => {
     const { username } = req.params;
