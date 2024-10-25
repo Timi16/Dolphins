@@ -14,8 +14,8 @@ window.onload = function () {
 
 function handleInviteCode(inviteCode) {
     const username = localStorage.getItem('username');
-
-    if (!username) {
+    const token = localStorage.getItem('token');
+    if (!username || !token) {
         alert('Please log in to use the invite code.');
         return;
     }
@@ -23,7 +23,7 @@ function handleInviteCode(inviteCode) {
     fetch(`https://dolphins-ai6u.onrender.com/api/rewards/referral/${inviteCode}`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ username }),
     })
@@ -40,12 +40,18 @@ function handleInviteCode(inviteCode) {
 function generateInviteLink() {
     const username = localStorage.getItem('username');
 
-    if (!username) {
-        alert('User not logged in.');
+    const token = localStorage.getItem('token');
+    if (!username || !token) {
+        alert('Please log in to use the invite code.');
         return;
     }
 
-    fetch(`https://dolphins-ai6u.onrender.com/api/rewards/generate-invite/${username}`)
+    fetch(`https://dolphins-ai6u.onrender.com/api/rewards/generate-invite/${username}`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+    })
         .then((response) => response.json())
         .then((data) => {
             const inviteLink = data.inviteLink;
@@ -68,12 +74,18 @@ function generateInviteLink() {
 function displayInvitedFriends() {
     const username = localStorage.getItem('username');
 
-    if (!username) {
-        alert('User not logged in.');
+    const token = localStorage.getItem('token');
+    if (!username || !token) {
+        alert('Please log in to use the invite code.');
         return;
     }
 
-    fetch(`https://dolphins-ai6u.onrender.com/api/rewards/referrals/${username}`)
+    fetch(`https://dolphins-ai6u.onrender.com/api/rewards/referrals/${username}`,{
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}` // Include token in headers
+        }
+    })
         .then((response) => response.json())
         .then((data) => {
             const friendsList = data.referredUsers || [];

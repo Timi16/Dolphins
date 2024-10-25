@@ -209,17 +209,19 @@
 
 // Get username from localStorage
 const username = localStorage.getItem('username');
-if (!username) {
+const token = localStorage.getItem('token');
+if (!username || !token) {
     window.location.href = 'home.html';
 }
 
 // Add function to save game score to database
 async function saveGameScore(gameScore) {
+  const token = localStorage.getItem('token');
     try {
         const response = await fetch('https://dolphins-ai6u.onrender.com/api/rewards/update-game-score', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify({
                 username,
