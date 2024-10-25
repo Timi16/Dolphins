@@ -1,6 +1,10 @@
 const express = require('express');
+const jwt = require('jsonwebtoken'); // Import jwt for generating tokens
 const router = express.Router();
 const User = require('../models/User');
+
+// Use a secure JWT secret key (the one you generated)
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // User registration endpoint
 router.post('/register', async (req, res) => {
@@ -41,11 +45,15 @@ router.post('/register', async (req, res) => {
 
         // Save the new user to the database
         await newUser.save();
-        return res.status(201).json({ message: 'User registered successfully' });
+
+        // Generate a JWT token for the user
+        const token = jwt.sign({ username: newUser.username }, JWT_SECRET, { expiresIn: '365d' }); // Token valid for 1 year
+
+        // Send the token back to the client with a success message
+        return res.status(201).json({ message: 'User registered successfully', token });
     } catch (err) {
         return res.status(500).json({ message: 'Server error', error: err });
     }
 });
 
 module.exports = router;
-

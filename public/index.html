@@ -8,7 +8,7 @@
 </head>
 <body>
     <div class="container">
-        <div class="form-box">
+        <div class="form-box" id="loginForm">
             <h2>Enter Username</h2>
             <form id="registrationForm">
                 <input type="text" id="username" placeholder="Username" required>
@@ -18,13 +18,13 @@
     </div>
 
     <script>
-        let inviteCode = null;
-
         window.onload = function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            inviteCode = urlParams.get('inviteCode');
-            if (inviteCode) {
-                console.log('Invite code detected:', inviteCode);
+            // Check if the token already exists in localStorage
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                // Redirect to home.html if the token is present
+                window.location.href = 'home.html';
+                return;
             }
         };
 
@@ -37,39 +37,34 @@
                 return;
             }
 
-            localStorage.setItem('username', username); // Store username in localStorage
-
             try {
                 const response = await fetch('https://dolphins-ai6u.onrender.com/api/user/register', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ username, inviteCode })  // Include inviteCode in the request
+                    body: JSON.stringify({ username })  // Send username for registration
                 });
 
                 const data = await response.json();
                 if (response.ok) {
-                    // User registered successfully
+                    // Registration successful
                     alert('Registration successful!');
-                    
-                    // Process the invite code if present
-                    if (inviteCode) {
-                        await processInviteCode(inviteCode, username);
-                    }
-                    
-                    // Redirect to index.html
+
+                    // Store the JWT token in localStorage
+                    localStorage.setItem('authToken', data.token);
+
+                    // Redirect to home.html
                     window.location.href = 'home.html';
                 } else {
                     // Handle errors (e.g., user already exists)
-                    alert(data.message || 'An error occurred.'); // Use a fallback error message
+                    alert(data.message || 'An error occurred.');
                 }
             } catch (error) {
                 console.error('Error:', error);
                 alert('There was an error with the registration process.');
             }
         });
-
         async function processInviteCode(inviteCode, username) {
             try {
                 const response = await fetch(`https://dolphins-ai6u.onrender.com/api/rewards/referral/${inviteCode}`, {
@@ -85,7 +80,7 @@
                     alert(data.message); // Show success message for referral
                 } else {
                     console.error('Error processing invite code:', data.message);
-                    alert(data.message || 'Failed to process invite code.'); // Use a fallback error message
+                    alert(data.message || 'Failed to process invite code.');
                 }
             } catch (error) {
                 console.error('Error processing invite code:', error);
@@ -95,3 +90,4 @@
     </script>
 </body>
 </html>
+
