@@ -220,7 +220,7 @@ async function saveGameScore(gameScore) {
         const response = await fetch('https://dolphins-ai6u.onrender.com/api/rewards/update-game-score', {
             method: 'POST',
             headers: {
-                'Authorization': `${token}`
+                'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify({
                 username,

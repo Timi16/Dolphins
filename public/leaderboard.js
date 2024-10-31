@@ -22,7 +22,7 @@ window.onload = function() {
     fetch(`https://dolphins-ai6u.onrender.com/api/rewards/user/${username}`, {
         method: 'GET',
         headers: {
-            'Authorization': `${token}` // Include token in headers
+            'Authorization': `Bearer ${token}` // Include token in headers
         }
     })
     .then(response => response.json())
@@ -50,7 +50,7 @@ window.onload = function() {
     fetch('https://dolphins-ai6u.onrender.com/api/rewards/leaderboard', {
         method: 'GET',
         headers: {
-            'Authorization': `${token}` // Include token in headers
+            'Authorization': `Bearer ${token}` // Include token in headers
         }
     })
     .then(response => response.json())
@@ -81,7 +81,7 @@ window.onload = function() {
     fetch('https://dolphins-ai6u.onrender.com/api/rewards/holdersCount', {
         method: 'GET',
         headers: {
-            'Authorization': `${token}` // Include token in headers
+            'Authorization': `Bearer ${token}` // Include token in headers
         }
     })
     .then(response => response.json())
