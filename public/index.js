@@ -1,74 +1,134 @@
 // First, improve the token validation in index.js
-function checkUserLoggedIn() {
-    const username = localStorage.getItem('username');
-    const token = localStorage.getItem('token');
-    
-    if (!username || !token) {
-        window.location.href = 'index.html'; // Redirect to login page instead of alert
-        return false;
-    }
-    return { username, token };
-}
-
 function fetchUserScore(username, token) {
-    // Add proper error handling and token validation
-    if (!token || token === 'undefined' || token === 'null') {
-        console.error('Invalid token detected');
+    if (!username || !token) {
+        console.error('Missing username or token');
         window.location.href = 'index.html';
         return;
     }
 
-    fetch(`https://dolphins-ai6u.onrender.com/api/rewards/user/${username}`, {
+    const apiUrl = `https://dolphins-ai6u.onrender.com/api/rewards/user/${encodeURIComponent(username)}`;
+    
+    fetch(apiUrl, {
         method: 'GET',
         headers: {
             'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
         }
     })
-    .then(response => {
-        if (!response.ok) {
-            if (response.status === 401 || response.status === 403) {
-                // Token is invalid or expired
-                localStorage.removeItem('token');
-                localStorage.removeItem('username');
-                window.location.href = 'index.html';
-                throw new Error('Authentication failed');
-            }
-            throw new Error(`HTTP error! status: ${response.status}`);
+    .then(async response => {
+        // First check if the response is JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('Server returned non-JSON response');
         }
-        return response.json();
+
+        const data = await response.json();
+        
+        if (!response.ok) {
+            // Handle different error status codes
+            switch (response.status) {
+                case 401:
+                case 403:
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('username');
+                    window.location.href = 'index.html';
+                    throw new Error('Authentication failed');
+                case 404:
+                    throw new Error('User not found');
+                case 500:
+                    throw new Error(data.details || 'Server error occurred');
+                default:
+                    throw new Error(data.message || 'An error occurred');
+            }
+        }
+
+        return data;
     })
     .then(data => {
         if (data.score !== undefined) {
             const scoreElement = document.getElementById('score-value');
             if (scoreElement) {
                 scoreElement.textContent = data.score;
+                console.log(`Score updated successfully: ${data.score}`);
             }
-        } else {
-            console.warn('Score data not found in response');
+            
+            // Also update other user data if available
+            if (data.completedTasks) {
+                localStorage.setItem('completedTasks', JSON.stringify(data.completedTasks));
+                updateButtonStates(data.completedTasks);
+            }
         }
     })
     .catch(error => {
         console.error('Error fetching user score:', error);
-        if (error.message !== 'Authentication failed') {
-            // Only show alert if it's not an auth error (since we're already redirecting)
-            alert('Error loading user data. Please try refreshing the page.');
+        
+        // Show user-friendly error message
+        const errorMessage = getErrorMessage(error.message);
+        showErrorNotification(errorMessage);
+        
+        // If it's not an auth error and the error persists, retry after delay
+        if (!error.message.includes('Authentication failed')) {
+            setTimeout(() => {
+                retryFetch(username, token, 3); // Retry up to 3 times
+            }, 2000);
         }
     });
 }
 
-// Update the window.onload function to handle errors better
-window.onload = function() {
-    const userAuth = checkUserLoggedIn();
-    if (!userAuth) return; // Will redirect to login if needed
+// Helper functions
+function getErrorMessage(error) {
+    const errorMessages = {
+        'Authentication failed': 'Please log in again',
+        'User not found': 'User account not found',
+        'Server error occurred': 'Server is temporarily unavailable',
+        'Server returned non-JSON response': 'Unexpected server response'
+    };
+    return errorMessages[error] || 'Unable to load user data';
+}
 
-    // Fetch user data and update score
-    fetchUserScore(userAuth.username, userAuth.token);
+function showErrorNotification(message) {
+    // Create or update error notification element
+    let notification = document.getElementById('error-notification');
+    if (!notification) {
+        notification = document.createElement('div');
+        notification.id = 'error-notification';
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #ff4444;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            z-index: 1000;
+        `;
+        document.body.appendChild(notification);
+    }
+    notification.textContent = message;
+    
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+        notification.remove();
+    }, 5000);
+}
 
-    // Update task button states
-    const completedTasks = JSON.parse(localStorage.getItem('completedTasks')) || {};
-    updateButtonStates(completedTasks);
-};
+function retryFetch(username, token, maxRetries, currentRetry = 1) {
+    if (currentRetry > maxRetries) {
+        showErrorNotification('Unable to connect to server after multiple attempts');
+        return;
+    }
+
+    console.log(`Retry attempt ${currentRetry} of ${maxRetries}`);
+    fetchUserScore(username, token)
+        .catch(() => {
+            if (currentRetry < maxRetries) {
+                setTimeout(() => {
+                    retryFetch(username, token, maxRetries, currentRetry + 1);
+                }, 2000 * currentRetry); // Exponential backoff
+            }
+        });
+}
 
 function updateButtonStates(completedTasks) {
     updateButtonState('watch-ads-button', completedTasks.watchAds, 'Watched');

@@ -2,6 +2,27 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+
+const handleErrors = (err, req, res, next) => {
+    console.error('Error details:', err);
+    if (err.name === 'ValidationError') {
+        return res.status(400).json({ 
+            message: 'Validation Error', 
+            details: err.message 
+        });
+    }
+    if (err.name === 'MongoError' || err.name === 'MongoServerError') {
+        return res.status(503).json({ 
+            message: 'Database Error', 
+            details: 'Unable to complete database operation' 
+        });
+    }
+    res.status(500).json({ 
+        message: 'Internal Server Error',
+        details: process.env.NODE_ENV === 'development' ? err.message : 'An unexpected error occurred'
+    });
+};
+
 const authenticateJWT = (req, res, next) => {
     const authHeader = req.headers['authorization'];
     if (authHeader && authHeader.startsWith('Bearer ')) {
@@ -96,28 +117,42 @@ router.get('/generate-invite/:username',authenticateJWT, async (req, res) => {
 });
 
 // Get user score and tasks
-router.get('/user/:username',authenticateJWT, async (req, res) => {
+router.get('/user/:username', authenticateJWT, async (req, res) => {
     const { username } = req.params;
-    console.log(`Received username: ${username}`); // Debugging line
+    
+    if (!username) {
+        return res.status(400).json({ 
+            message: 'Bad Request', 
+            details: 'Username is required' 
+        });
+    }
 
     try {
         const user = await User.findOne({ username });
-        console.log(`User found: ${user}`); // Debugging line
+        
+        if (!user) {
+            return res.status(404).json({ 
+                message: 'Not Found',
+                details: 'User not found'
+            });
+        }
 
-        if (!user) return res.status(404).json({ message: 'User not found' });
-
+        // Add request logging
+        console.log(`User data retrieved successfully for: ${username}`);
+        
         return res.json({
             username: user.username,
-            score: user.score,
-            completedTasks: user.completedTasks,
-            dailyRewardCollected: user.dailyRewardCollected,
+            score: user.score || 0,
+            completedTasks: user.completedTasks || [],
+            dailyRewardCollected: user.dailyRewardCollected || false,
+            lastFetch: new Date().toISOString()
         });
+
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Server error' });
+        console.error(`Error fetching user ${username}:`, err);
+        next(err);
     }
 });
-
 
 // Get leaderboard data
 router.get('/leaderboard',authenticateJWT, async (req, res) => {
@@ -240,4 +275,5 @@ router.post('/update-game-score',authenticateJWT, async (req, res) => {
     }
 });
 
+router.use(handleErrors);
 module.exports = router;
