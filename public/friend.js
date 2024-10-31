@@ -28,34 +28,47 @@ function handleInviteCode(inviteCode) {
         },
         body: JSON.stringify({ username }),
     })
-        .then((response) => response.json())
-        .then((data) => {
+        .then(async (response) => {
+            const text = await response.text();
+            console.log('Raw response:', text);
+            const data = JSON.parse(text);
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to process invite code');
+            }
+
             alert(data.message);
         })
         .catch((error) => {
-            console.error('Error:', error);
+            console.error('Error processing invite code:', error);
             alert('An error occurred while processing the invite code.');
         });
 }
 
 function generateInviteLink() {
     const username = localStorage.getItem('username');
-
     const token = localStorage.getItem('token');
     if (!username || !token) {
-        alert('Please log in to use the invite code.');
+        alert('Please log in to generate an invite link.');
         return;
     }
 
     fetch(`https://dolphins-ai6u.onrender.com/api/rewards/generate-invite/${username}`, {
-            method: 'POST',
-            headers: {
-                'Authorization': token,
-                'Content-Type': 'application/json'
-            },
+        method: 'POST',
+        headers: {
+            'Authorization': token,
+            'Content-Type': 'application/json'
+        },
     })
-        .then((response) => response.json())
-        .then((data) => {
+        .then(async (response) => {
+            const text = await response.text();
+            console.log('Raw response:', text);
+            const data = JSON.parse(text);
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to generate invite link');
+            }
+
             const inviteLink = data.inviteLink;
 
             navigator.clipboard.writeText(inviteLink)
@@ -63,34 +76,40 @@ function generateInviteLink() {
                     alert('Invite link copied to clipboard!');
                 })
                 .catch((err) => {
-                    console.error('Could not copy text: ', err);
+                    console.error('Clipboard error:', err);
                     alert('Failed to copy invite link. Please try again.');
                 });
         })
         .catch((error) => {
-            console.error('Error:', error);
+            console.error('Error generating invite link:', error);
             alert('Failed to generate invite link. Please try again.');
         });
 }
 
 function displayInvitedFriends() {
     const username = localStorage.getItem('username');
-
     const token = localStorage.getItem('token');
     if (!username || !token) {
-        alert('Please log in to use the invite code.');
+        alert('Please log in to view invited friends.');
         return;
     }
 
-    fetch(`https://dolphins-ai6u.onrender.com/api/rewards/referrals/${username}`,{
+    fetch(`https://dolphins-ai6u.onrender.com/api/rewards/referrals/${username}`, {
         method: 'GET',
         headers: {
             'Authorization': token,
             'Content-Type': 'application/json'
         }
     })
-        .then((response) => response.json())
-        .then((data) => {
+        .then(async (response) => {
+            const text = await response.text();
+            console.log('Raw response:', text);
+            const data = JSON.parse(text);
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to fetch invited friends');
+            }
+
             const friendsList = data.referredUsers || [];
             const friendCount = friendsList.length;
             const friendListContainer = document.getElementById('invited-friends-list');
@@ -113,6 +132,6 @@ function displayInvitedFriends() {
         })
         .catch((error) => {
             console.error('Error fetching invited friends:', error);
+            alert('An error occurred while loading invited friends.');
         });
 }
-
