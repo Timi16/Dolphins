@@ -101,28 +101,41 @@ router.get('/user/:username', authenticateJWT, async (req, res) => {
     const { username } = req.params;
 
     if (!username) {
-        return res.status(400).json({ message: 'Bad Request', details: 'Username is required' });
+        return res.status(400).json({ 
+            success: false,
+            message: 'Username is required'
+        });
     }
 
     try {
         const user = await User.findOne({ username });
 
         if (!user) {
-            return res.status(404).json({ message: 'Not Found', details: 'User not found' });
+            return res.status(404).json({ 
+                success: false,
+                message: 'User not found' 
+            });
         }
 
-        return res.json({
-            username: user.username,
-            score: user.score,
-            completedTasks: user.completedTasks,
-            dailyRewardCollected: user.dailyRewardCollected,
+        // Always return a consistent JSON structure
+        return res.status(200).json({
+            success: true,
+            data: {
+                username: user.username,
+                score: user.score,
+                completedTasks: user.completedTasks || [],
+                dailyRewardCollected: user.dailyRewardCollected || false
+            }
         });
     } catch (err) {
         console.error('Error fetching user:', err);
-        return res.status(500).json({ message: 'Internal Server Error', details: err.message });
+        return res.status(500).json({ 
+            success: false,
+            message: 'Internal server error',
+            error: err.message 
+        });
     }
 });
-
 
 // Get leaderboard data
 router.get('/leaderboard',authenticateJWT, async (req, res) => {

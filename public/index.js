@@ -1,102 +1,78 @@
-// Improved fetchUserScore that returns a Promise
 function fetchUserScore(username, token) {
     return new Promise((resolve, reject) => {
         if (!username || !token) {
             console.error('Missing username or token');
-            window.location.href = 'index.html';
             reject(new Error('Missing credentials'));
             return;
         }
 
         const apiUrl = `https://dolphins-ai6u.onrender.com/api/rewards/user/${username}`;
         
-        console.log(`Fetching score for user: ${username} with token: ${token}`);
-        
         fetch(apiUrl, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
+                'Content-Type': 'application/json'
             }
         })
-        .then(async response => {
-            const contentType = response.headers.get('content-type');
-            if (!contentType || !contentType.includes('application/json')) {
-                throw new Error('Server returned non-JSON response');
-            }
-
-            const data = await response.json();
-
+        .then(response => {
+            // First check if response is ok
             if (!response.ok) {
-                console.error('Error response:', data);
-                switch (response.status) {
-                    case 401:
-                    case 403:
-                        localStorage.removeItem('token');
-                        localStorage.removeItem('username');
-                        window.location.href = 'index.html';
-                        throw new Error('Authentication failed');
-                    case 404:
-                        throw new Error('User not found');
-                    case 500:
-                        throw new Error(data.details || 'Server error occurred');
-                    default:
-                        throw new Error(data.message || 'An error occurred');
-                }
+                return response.json().then(errorData => {
+                    throw new Error(errorData.message || 'Server error');
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (!data.success) {
+                throw new Error(data.message || 'Failed to fetch user data');
             }
 
-            console.log('Received data:', data);
-
+            // Update UI with user data
             const scoreElement = document.getElementById('score-value');
-            if (data.score !== undefined && scoreElement) {
-                scoreElement.textContent = data.score;
-                console.log(`Score updated successfully: ${data.score}`);
-            } else {
-                console.error('Score element not found in the DOM or score is undefined');
+            if (scoreElement && data.data.score !== undefined) {
+                scoreElement.textContent = data.data.score;
+                console.log(`Score updated successfully: ${data.data.score}`);
             }
 
-            if (data.completedTasks) {
-                localStorage.setItem('completedTasks', JSON.stringify(data.completedTasks));
-                updateButtonStates(data.completedTasks);
+            // Update completed tasks if available
+            if (data.data.completedTasks) {
+                localStorage.setItem('completedTasks', JSON.stringify(data.data.completedTasks));
+                updateButtonStates(data.data.completedTasks);
             }
 
-            resolve(data);
+            resolve(data.data);
         })
         .catch(error => {
             console.error('Error fetching user score:', error);
             
-            if (error.response) {
-                console.error('Response data:', error.response.data);
-            }
-
             const errorMessage = getErrorMessage(error.message);
             showErrorNotification(errorMessage);
+            
+            // Handle authentication errors
+            if (error.message.includes('Authentication failed') || 
+                error.message.includes('jwt')) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('username');
+                window.location.href = 'index.html';
+            }
+            
             reject(error);
         });
     });
 }
 
-// Improved retry mechanism
-function retryFetch(username, token, maxRetries, currentRetry = 1) {
-    if (currentRetry > maxRetries) {
-        showErrorNotification('Unable to connect to server after multiple attempts');
-        return Promise.reject(new Error('Max retries exceeded'));
-    }
-
-    console.log(`Retry attempt ${currentRetry} of ${maxRetries}`);
-    
-    return fetchUserScore(username, token)
-        .catch(error => {
-            if (currentRetry < maxRetries) {
-                return new Promise(resolve => {
-                    setTimeout(() => {
-                        resolve(retryFetch(username, token, maxRetries, currentRetry + 1));
-                    }, 2000 * currentRetry); // Exponential backoff
-                });
-            }
-            throw error;
-        });
+// Updated error message handler
+function getErrorMessage(error) {
+    const errorMessages = {
+        'Authentication failed': 'Please log in again',
+        'User not found': 'User account not found',
+        'Internal server error': 'Server is temporarily unavailable',
+        'Missing credentials': 'Please log in to continue',
+        'Server error': 'Unable to connect to server'
+    };
+    return errorMessages[error] || 'Unable to load user data';
 }
 
 // Update the event listener to use the new retry mechanism
@@ -111,18 +87,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 });
-
-// Helper functions
-function getErrorMessage(error) {
-    const errorMessages = {
-        'Authentication failed': 'Please log in again',
-        'User not found': 'User account not found',
-        'Server error occurred': 'Server is temporarily unavailable',
-        'Server returned non-JSON response': 'Unexpected server response'
-    };
-    return errorMessages[error] || 'Unable to load user data';
-}
-
 function showErrorNotification(message) {
     // Create or update error notification element
     let notification = document.getElementById('error-notification');
