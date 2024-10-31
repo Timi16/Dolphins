@@ -105,7 +105,7 @@ router.get('/user/:username', authenticateJWT, async (req, res) => {
     }
 
     try {
-        const user = await TelegramUser.findOne({ username });
+        const user = await User.findOne({ username });
 
         if (!user) {
             return res.status(404).json({ message: 'Not Found', details: 'User not found' });
