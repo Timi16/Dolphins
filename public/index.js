@@ -76,7 +76,59 @@ function fetchUserScore(username, token) {
     });
 }
 
+// Helper functions
+function getErrorMessage(error) {
+    const errorMessages = {
+        'Authentication failed': 'Please log in again',
+        'User not found': 'User account not found',
+        'Server error occurred': 'Server is temporarily unavailable',
+        'Server returned non-JSON response': 'Unexpected server response'
+    };
+    return errorMessages[error] || 'Unable to load user data';
+}
 
+function showErrorNotification(message) {
+    // Create or update error notification element
+    let notification = document.getElementById('error-notification');
+    if (!notification) {
+        notification = document.createElement('div');
+        notification.id = 'error-notification';
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #ff4444;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            z-index: 1000;
+        `;
+        document.body.appendChild(notification);
+    }
+    notification.textContent = message;
+    
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+        notification.remove();
+    }, 5000);
+}
+
+function retryFetch(username, token, maxRetries, currentRetry = 1) {
+    if (currentRetry > maxRetries) {
+        showErrorNotification('Unable to connect to server after multiple attempts');
+        return;
+    }
+
+    console.log(`Retry attempt ${currentRetry} of ${maxRetries}`);
+    fetchUserScore(username, token)
+        .catch(() => {
+            if (currentRetry < maxRetries) {
+                setTimeout(() => {
+                    retryFetch(username, token, maxRetries, currentRetry + 1);
+                }, 2000 * currentRetry); // Exponential backoff
+            }
+        });
+}
 function checkUserLoggedIn() {
     const username = localStorage.getItem('username');
     const token = localStorage.getItem('token');
@@ -116,7 +168,7 @@ function markAsCompleted(button, buttonText) {
     button.textContent = buttonText;
 }
 
-// Updated reward-related functions with proper error handling
+
 function getDailyReward() {
     const user = checkUserLoggedIn();
     if (!user) return;
@@ -124,60 +176,23 @@ function getDailyReward() {
     fetch('https://dolphins-ai6u.onrender.com/api/rewards/daily-reward', {
         method: 'POST',
         headers: {
-            'Authorization': `Bearer ${user.token}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
+            'Authorization': `Bearer ${user.token}`
         },
         body: JSON.stringify({ username: user.username })
     })
-    .then(async response => {
-        // Check for JSON response
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-            throw new Error('Server returned non-JSON response');
-        }
-
-        const data = await response.json();
-        
-        if (!response.ok) {
-            switch (response.status) {
-                case 401:
-                case 403:
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('username');
-                    window.location.href = 'index.html';
-                    throw new Error('Authentication failed');
-                case 404:
-                    throw new Error('User not found');
-                case 400:
-                    throw new Error(data.message || 'Daily reward already collected');
-                case 500:
-                    throw new Error(data.details || 'Server error occurred');
-                default:
-                    throw new Error(data.message || 'An error occurred');
-            }
-        }
-        return data;
-    })
+    .then(response => response.json())
     .then(data => {
         if (data.newScore) {
             document.getElementById('score-value').textContent = data.newScore;
             localStorage.setItem('score', data.newScore);
             markAsCompleted(document.getElementById('daily-reward-button'), 'Collected');
             saveCompletionStatus('dailyReward');
-            showSuccessNotification('Daily reward collected successfully!');
+        } else {
+            alert(data.message || 'Failed to get daily reward.');
         }
     })
     .catch(error => {
         console.error('Error getting daily reward:', error);
-        showErrorNotification(getErrorMessage(error.message));
-        
-        if (!error.message.includes('Authentication failed') && 
-            !error.message.includes('Daily reward already collected')) {
-            setTimeout(() => {
-                retryRewardFetch('daily-reward', user.username, user.token, 3);
-            }, 2000);
-        }
     });
 }
 
@@ -185,143 +200,35 @@ function earnReward(task, amount) {
     const user = checkUserLoggedIn();
     if (!user) return;
 
-    if (!task || amount === undefined) {
-        showErrorNotification('Invalid task parameters');
-        return;
-    }
-
     fetch('https://dolphins-ai6u.onrender.com/api/rewards/complete-task', {
         method: 'POST',
         headers: {
-            'Authorization': `Bearer ${user.token}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
+            'Authorization': `Bearer ${user.token}`
         },
-        body: JSON.stringify({ 
-            username: user.username, 
-            task, 
-            amount 
-        })
+        body: JSON.stringify({ username: user.username, task, amount })
     })
-    .then(async response => {
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-            throw new Error('Server returned non-JSON response');
-        }
-
-        const data = await response.json();
-        
-        if (!response.ok) {
-            switch (response.status) {
-                case 401:
-                case 403:
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('username');
-                    window.location.href = 'index.html';
-                    throw new Error('Authentication failed');
-                case 404:
-                    throw new Error('User not found');
-                case 400:
-                    throw new Error(data.message || 'Task already completed');
-                case 500:
-                    throw new Error(data.details || 'Server error occurred');
-                default:
-                    throw new Error(data.message || 'An error occurred');
-            }
-        }
-        return data;
-    })
+    .then(response => response.json())
     .then(data => {
         if (data.newScore) {
             document.getElementById('score-value').textContent = data.newScore;
             localStorage.setItem('score', data.newScore);
-            
-            // Mark the task as completed based on task type
-            switch (task) {
-                case 'ton_transaction':
-                    markAsCompleted(document.getElementById('reward-button'), 'Completed');
-                    saveCompletionStatus('tonTransaction');
-                    break;
-                case 'subscribe_mouse':
-                    markAsCompleted(document.getElementById('subscribe-mouse-button'), 'Subscribed');
-                    saveCompletionStatus('subscribeMouse');
-                    break;
-                // Add other task types as needed
+            alert(data.message || 'Task completed successfully.');
+
+            // Mark the task as completed
+            if (task === 'ton_transaction') {
+                markAsCompleted(document.getElementById('reward-button'), 'Completed');
+                saveCompletionStatus('tonTransaction');
+            } else if (task === 'subscribe_mouse') {
+                markAsCompleted(document.getElementById('subscribe-mouse-button'), 'Subscribed');
+                saveCompletionStatus('subscribeMouse');
             }
-            
-            showSuccessNotification(data.message || 'Task completed successfully!');
+        } else {
+            alert(data.message || 'Failed to complete task.');
         }
     })
     .catch(error => {
         console.error('Error completing task:', error);
-        showErrorNotification(getErrorMessage(error.message));
-        
-        if (!error.message.includes('Authentication failed') && 
-            !error.message.includes('Task already completed')) {
-            setTimeout(() => {
-                retryRewardFetch('complete-task', user.username, user.token, 3, { task, amount });
-            }, 2000);
-        }
     });
-}
-
-// Helper function for retrying reward-related fetches
-function retryRewardFetch(endpoint, username, token, maxRetries, additionalData = null, currentRetry = 1) {
-    if (currentRetry > maxRetries) {
-        showErrorNotification('Unable to connect to server after multiple attempts');
-        return;
-    }
-
-    console.log(`Retry attempt ${currentRetry} of ${maxRetries}`);
-    
-    switch (endpoint) {
-        case 'daily-reward':
-            getDailyReward();
-            break;
-        case 'complete-task':
-            if (additionalData) {
-                earnReward(additionalData.task, additionalData.amount);
-            }
-            break;
-    }
-}
-
-// Add success notification function
-function showSuccessNotification(message) {
-    let notification = document.getElementById('success-notification');
-    if (!notification) {
-        notification = document.createElement('div');
-        notification.id = 'success-notification';
-        notification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 5px;
-            z-index: 1000;
-        `;
-        document.body.appendChild(notification);
-    }
-    notification.textContent = message;
-    
-    setTimeout(() => {
-        notification.remove();
-    }, 5000);
-}
-
-// Update error messages map
-function getErrorMessage(error) {
-    const errorMessages = {
-        'Authentication failed': 'Please log in again',
-        'User not found': 'User account not found',
-        'Server error occurred': 'Server is temporarily unavailable',
-        'Server returned non-JSON response': 'Unexpected server response',
-        'Daily reward already collected': 'You have already collected today\'s reward',
-        'Task already completed': 'You have already completed this task'
-    };
-    return errorMessages[error] || 'Unable to process request';
 }
 
 function generateInviteLink() {
