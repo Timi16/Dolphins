@@ -71,8 +71,6 @@ function generateInviteLink() {
         const inviteLink = data.inviteLink;
         navigator.clipboard.writeText(inviteLink).then(() => {
             alert('Invite link copied to clipboard!');
-            markAsCompleted(document.getElementById('invite-friends-button'), 'Sent');
-            saveCompletionStatus('inviteFriends');
         });
 
         if (navigator.share) {
