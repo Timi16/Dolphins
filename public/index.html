@@ -19,78 +19,79 @@
 
     <script>
         window.onload = function() {
-            // Check if the token already exists in localStorage
-            const token = localStorage.getItem('authToken');
-            console.log('Retrieved token on load:', token);  // Debugging line
-            if (token) {
-                // Redirect to home.html if the token is present
+            // Check if both token and username exist in localStorage
+            const token = localStorage.getItem('token');
+            const username = localStorage.getItem('username');
+            
+            if (token && username) {
+                // Redirect to home.html if user is already logged in
                 window.location.href = 'home.html';
+            }
+
+            // Check for invite code in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const inviteCode = urlParams.get('inviteCode');
+            if (inviteCode) {
+                // Store invite code for registration
+                localStorage.setItem('pendingInviteCode', inviteCode);
             }
         };
 
         document.getElementById('registrationForm').addEventListener('submit', async function(event) {
-            event.preventDefault();  // Prevent form from submitting the traditional way
+            event.preventDefault();
 
-            const username = document.getElementById('username').value.trim(); // Trim whitespace
+            const username = document.getElementById('username').value.trim();
             if (username === "") {
                 alert("Please enter a username.");
                 return;
             }
 
+            // Get the stored invite code if it exists
+            const inviteCode = localStorage.getItem('pendingInviteCode');
+            
+            // Prepare request body
+            const requestBody = { username };
+            if (inviteCode) {
+                requestBody.inviteCode = inviteCode;
+            }
+
             try {
+                // Use the correct endpoint
                 const response = await fetch('https://dolphins-ai6u.onrender.com/api/user/register', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ username })  // Send username for registration
+                    body: JSON.stringify(requestBody)
                 });
 
                 const data = await response.json();
-                console.log('Registration response:', data);  // Debugging line
+                console.log('Registration response:', data);
 
-                if (response.ok && data.token) {
-                    // Registration successful
+                if (data.token) {
+                    // Store both token and username
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('username', username);
+                    
+                    // Initialize completed tasks
+                    localStorage.setItem('completedTasks', JSON.stringify({}));
+                    
+                    // Remove pending invite code
+                    localStorage.removeItem('pendingInviteCode');
+
+                    // Show success message
                     alert('Registration successful!');
-
-                    // Store the JWT token in localStorage
-                    localStorage.setItem('authToken', data.token);
-                    console.log('Token stored:', localStorage.getItem('authToken'));  // Confirm token storage
 
                     // Redirect to home.html
                     window.location.href = 'home.html';
                 } else {
-                    // Handle errors (e.g., user already exists)
-                    alert(data.message || 'An error occurred.');
+                    alert(data.message || 'Registration failed. Please try again.');
                 }
             } catch (error) {
                 console.error('Error:', error);
                 alert('There was an error with the registration process.');
             }
         });
-
-        async function processInviteCode(inviteCode, username) {
-            try {
-                const response = await fetch(`https://dolphins-ai6u.onrender.com/api/rewards/referral/${inviteCode}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ username }),
-                });
-
-                const data = await response.json();
-                if (response.ok) {
-                    alert(data.message); // Show success message for referral
-                } else {
-                    console.error('Error processing invite code:', data.message);
-                    alert(data.message || 'Failed to process invite code.');
-                }
-            } catch (error) {
-                console.error('Error processing invite code:', error);
-                alert('There was an error processing the invite code.');
-            }
-        }
     </script>
 </body>
 </html>
