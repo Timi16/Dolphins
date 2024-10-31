@@ -1,82 +1,116 @@
+// Improved fetchUserScore that returns a Promise
 function fetchUserScore(username, token) {
-    if (!username || !token) {
-        console.error('Missing username or token');
-        window.location.href = 'index.html';
-        return;
-    }
-
-    const apiUrl = `https://dolphins-ai6u.onrender.com/api/rewards/user/${username}`;
-    
-    console.log(`Fetching score for user: ${username} with token: ${token}`);
-    
-    fetch(apiUrl, {
-        method: 'GET',
-        headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        }
-    })
-    .then(async response => {
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-            throw new Error('Server returned non-JSON response');
+    return new Promise((resolve, reject) => {
+        if (!username || !token) {
+            console.error('Missing username or token');
+            window.location.href = 'index.html';
+            reject(new Error('Missing credentials'));
+            return;
         }
 
-        const data = await response.json();
-
-        if (!response.ok) {
-            console.error('Error response:', data); // Log the error response
-            switch (response.status) {
-                case 401:
-                case 403:
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('username');
-                    window.location.href = 'index.html';
-                    throw new Error('Authentication failed');
-                case 404:
-                    throw new Error('User not found');
-                case 500:
-                    throw new Error(data.details || 'Server error occurred');
-                default:
-                    throw new Error(data.message || 'An error occurred');
-            }
-        }
-
-        console.log('Received data:', data); // Log the data for inspection
-
-        const scoreElement = document.getElementById('score-value');
-        if (data.score !== undefined && scoreElement) {
-            scoreElement.textContent = data.score;
-            console.log(`Score updated successfully: ${data.score}`);
-        } else {
-            console.error('Score element not found in the DOM or score is undefined');
-        }
-
-        // Update other user data if available
-        if (data.completedTasks) {
-            localStorage.setItem('completedTasks', JSON.stringify(data.completedTasks));
-            updateButtonStates(data.completedTasks);
-        }
-    })
-    .catch(error => {
-        console.error('Error fetching user score:', error);
+        const apiUrl = `https://dolphins-ai6u.onrender.com/api/rewards/user/${username}`;
         
-        if (error.response) {
-            console.error('Response data:', error.response.data);
-        }
+        console.log(`Fetching score for user: ${username} with token: ${token}`);
+        
+        fetch(apiUrl, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        })
+        .then(async response => {
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error('Server returned non-JSON response');
+            }
 
-        const errorMessage = getErrorMessage(error.message);
-        showErrorNotification(errorMessage);
+            const data = await response.json();
 
-        // Retry logic
-        if (!error.message.includes('Authentication failed')) {
-            setTimeout(() => {
-                retryFetch(username, token, 3);
-            }, 2000);
-        }
+            if (!response.ok) {
+                console.error('Error response:', data);
+                switch (response.status) {
+                    case 401:
+                    case 403:
+                        localStorage.removeItem('token');
+                        localStorage.removeItem('username');
+                        window.location.href = 'index.html';
+                        throw new Error('Authentication failed');
+                    case 404:
+                        throw new Error('User not found');
+                    case 500:
+                        throw new Error(data.details || 'Server error occurred');
+                    default:
+                        throw new Error(data.message || 'An error occurred');
+                }
+            }
+
+            console.log('Received data:', data);
+
+            const scoreElement = document.getElementById('score-value');
+            if (data.score !== undefined && scoreElement) {
+                scoreElement.textContent = data.score;
+                console.log(`Score updated successfully: ${data.score}`);
+            } else {
+                console.error('Score element not found in the DOM or score is undefined');
+            }
+
+            if (data.completedTasks) {
+                localStorage.setItem('completedTasks', JSON.stringify(data.completedTasks));
+                updateButtonStates(data.completedTasks);
+            }
+
+            resolve(data);
+        })
+        .catch(error => {
+            console.error('Error fetching user score:', error);
+            
+            if (error.response) {
+                console.error('Response data:', error.response.data);
+            }
+
+            const errorMessage = getErrorMessage(error.message);
+            showErrorNotification(errorMessage);
+            reject(error);
+        });
     });
 }
+
+// Improved retry mechanism
+function retryFetch(username, token, maxRetries, currentRetry = 1) {
+    if (currentRetry > maxRetries) {
+        showErrorNotification('Unable to connect to server after multiple attempts');
+        return Promise.reject(new Error('Max retries exceeded'));
+    }
+
+    console.log(`Retry attempt ${currentRetry} of ${maxRetries}`);
+    
+    return fetchUserScore(username, token)
+        .catch(error => {
+            if (currentRetry < maxRetries) {
+                return new Promise(resolve => {
+                    setTimeout(() => {
+                        resolve(retryFetch(username, token, maxRetries, currentRetry + 1));
+                    }, 2000 * currentRetry); // Exponential backoff
+                });
+            }
+            throw error;
+        });
+}
+
+// Update the event listener to use the new retry mechanism
+document.addEventListener('DOMContentLoaded', function() {
+    const username = localStorage.getItem('username');
+    const token = localStorage.getItem('token');
+    if (username && token) {
+        retryFetch(username, token, 3)
+            .catch(error => {
+                console.error('All retry attempts failed:', error);
+                showErrorNotification('Failed to load user data after multiple attempts');
+            });
+    }
+});
 
 // Helper functions
 function getErrorMessage(error) {
@@ -298,11 +332,3 @@ function trackReferral(inviteCode) {
 function startGame() {
     window.location.href = 'game.html';
 }
-
-document.addEventListener('DOMContentLoaded', function() {
-    const username = localStorage.getItem('username');
-    const token = localStorage.getItem('token');
-    if (username && token) {
-        fetchUserScore(username, token);
-    }
-});
