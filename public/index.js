@@ -129,6 +129,17 @@ function retryFetch(username, token, maxRetries, currentRetry = 1) {
             }
         });
 }
+function checkUserLoggedIn() {
+    const username = localStorage.getItem('username');
+    const token = localStorage.getItem('token');
+    
+    if (!username || !token) {
+        window.location.href = 'index.html'; // Redirect to login page instead of alert
+        return false;
+    }
+    return { username, token };
+}
+
 
 function updateButtonStates(completedTasks) {
     updateButtonState('watch-ads-button', completedTasks.watchAds, 'Watched');
