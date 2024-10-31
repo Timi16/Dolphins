@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const TelegramSchema = new mongoose.Schema({
+const ProjectSchema = new mongoose.Schema({
     username: { type: String, required: true, unique: true },
     score: { type: Number },  // Remove the default value
     completedTasks: { type: [String], default: [] },
@@ -23,7 +23,7 @@ TelegramSchema.pre('save', function(next) {
     next();
 });
 
-const TelegramModel = mongoose.model('Telegram', TelegramSchema);
+const TelegramModel = mongoose.model('Project', ProjectSchema);
 
 module.exports = TelegramModel;
 
