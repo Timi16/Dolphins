@@ -299,3 +299,10 @@ function startGame() {
     window.location.href = 'game.html';
 }
 
+document.addEventListener('DOMContentLoaded', function() {
+    const username = localStorage.getItem('username');
+    const token = localStorage.getItem('token');
+    if (username && token) {
+        fetchUserScore(username, token);
+    }
+});
