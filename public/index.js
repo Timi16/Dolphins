@@ -170,15 +170,14 @@ function markAsCompleted(button, buttonText) {
 
 
 function getDailyReward() {
-    const user = checkUserLoggedIn();
-    if (!user) return;
-
+    const username = localStorage.getItem('username');
+    const token = localStorage.getItem('token');
     fetch('https://dolphins-ai6u.onrender.com/api/rewards/daily-reward', {
         method: 'POST',
         headers: {
-            'Authorization': `Bearer ${user.token}`
+            'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ username: user.username })
+        body: JSON.stringify({ username})
     })
     .then(response => response.json())
     .then(data => {
@@ -197,15 +196,14 @@ function getDailyReward() {
 }
 
 function earnReward(task, amount) {
-    const user = checkUserLoggedIn();
-    if (!user) return;
-
+    const username = localStorage.getItem('username');
+    const token = localStorage.getItem('token');
     fetch('https://dolphins-ai6u.onrender.com/api/rewards/complete-task', {
         method: 'POST',
         headers: {
-            'Authorization': `Bearer ${user.token}`
+            'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ username: user.username, task, amount })
+        body: JSON.stringify({ username, task, amount })
     })
     .then(response => response.json())
     .then(data => {
