@@ -23,7 +23,7 @@ function handleInviteCode(inviteCode) {
     fetch(`https://dolphins-ai6u.onrender.com/api/rewards/referral/${inviteCode}`, {
         method: 'POST',
         headers: {
-            'Authorization': `Bearer ${token}`
+            'Authorization': `${token}`
         },
         body: JSON.stringify({ username }),
     })
@@ -49,7 +49,7 @@ function generateInviteLink() {
     fetch(`https://dolphins-ai6u.onrender.com/api/rewards/generate-invite/${username}`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${token}`
+                'Authorization': `${token}`
             },
     })
         .then((response) => response.json())
@@ -83,7 +83,7 @@ function displayInvitedFriends() {
     fetch(`https://dolphins-ai6u.onrender.com/api/rewards/referrals/${username}`,{
         method: 'GET',
         headers: {
-            'Authorization': `Bearer ${token}` // Include token in headers
+            'Authorization': `${token}` // Include token in headers
         }
     })
         .then((response) => response.json())

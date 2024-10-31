@@ -22,7 +22,7 @@ function fetchUserScore(username, token) {
     fetch(`https://dolphins-ai6u.onrender.com/api/rewards/user/${username}`, {
         method: 'GET',
         headers: {
-            'Authorization': `Bearer ${token}`
+            'Authorization': `${token}`
         }
     })
     .then(response => response.json())
@@ -84,7 +84,7 @@ function getDailyReward() {
     fetch('https://dolphins-ai6u.onrender.com/api/rewards/daily-reward', {
         method: 'POST',
         headers: {
-            'Authorization': `Bearer ${user.token}`
+            'Authorization': `${user.token}`
         },
         body: JSON.stringify({ username: user.username })
     })
@@ -111,7 +111,7 @@ function earnReward(task, amount) {
     fetch('https://dolphins-ai6u.onrender.com/api/rewards/complete-task', {
         method: 'POST',
         headers: {
-            'Authorization': `Bearer ${user.token}`
+            'Authorization': `${user.token}`
         },
         body: JSON.stringify({ username: user.username, task, amount })
     })
@@ -146,7 +146,7 @@ function generateInviteLink() {
     fetch(`https://dolphins-ai6u.onrender.com/api/rewards/generate-invite/${user.username}`, {
         method: 'GET',
         headers: {
-            'Authorization': `Bearer ${user.token}`
+            'Authorization': `${user.token}`
         }
     })
     .then(response => response.json())
@@ -185,7 +185,7 @@ function trackReferral(inviteCode) {
     fetch(`https://dolphins-ai6u.onrender.com/api/rewards/referral/${inviteCode}`, {
         method: 'POST',
         headers: {
-            'Authorization': `Bearer ${user.token}`
+            'Authorization': `${user.token}`
         },
         body: JSON.stringify({ username: user.username })
     })
