@@ -44,46 +44,49 @@ function handleInviteCode(inviteCode) {
             alert('An error occurred while processing the invite code.');
         });
 }
-
-function generateInviteLink() {
+function checkUserLoggedIn() {
     const username = localStorage.getItem('username');
     const token = localStorage.getItem('token');
+    
     if (!username || !token) {
-        alert('Please log in to generate an invite link.');
-        return;
+        window.location.href = 'index.html'; // Redirect to login page instead of alert
+        return false;
     }
+    return { username, token };
+}
 
-    fetch(`https://dolphins-ai6u.onrender.com/api/rewards/generate-invite/${username}`, {
-        method: 'POST',
+function generateInviteLink() {
+    const user = checkUserLoggedIn();
+    if (!user) return;
+
+    fetch(`https://dolphins-ai6u.onrender.com/api/rewards/generate-invite/${user.username}`, {
+        method: 'GET',
         headers: {
-            'Authorization': token,
+            'Authorization': user.token,
             'Content-Type': 'application/json'
-        },
+        }
     })
-        .then(async (response) => {
-            const text = await response.text();
-            console.log('Raw response:', text);
-            const data = JSON.parse(text);
-
-            if (!response.ok) {
-                throw new Error(data.message || 'Failed to generate invite link');
-            }
-
-            const inviteLink = data.inviteLink;
-
-            navigator.clipboard.writeText(inviteLink)
-                .then(() => {
-                    alert('Invite link copied to clipboard!');
-                })
-                .catch((err) => {
-                    console.error('Clipboard error:', err);
-                    alert('Failed to copy invite link. Please try again.');
-                });
-        })
-        .catch((error) => {
-            console.error('Error generating invite link:', error);
-            alert('Failed to generate invite link. Please try again.');
+    .then(response => response.json())
+    .then(data => {
+        const inviteLink = data.inviteLink;
+        navigator.clipboard.writeText(inviteLink).then(() => {
+            alert('Invite link copied to clipboard!');
+            markAsCompleted(document.getElementById('invite-friends-button'), 'Sent');
+            saveCompletionStatus('inviteFriends');
         });
+
+        if (navigator.share) {
+            navigator.share({
+                title: 'Invite Link',
+                text: 'Join me using this invite link!',
+                url: inviteLink
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Error generating invite link:', error);
+        alert('Failed to generate invite link.');
+    });
 }
 
 function displayInvitedFriends() {
