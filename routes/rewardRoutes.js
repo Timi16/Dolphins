@@ -105,23 +105,20 @@ router.get('/user/:username', authenticateJWT, async (req, res) => {
     }
 
     try {
-        // Use User model to fetch user data
-        const user = await User.findOne({ username });
+        const user = await TelegramUser.findOne({ username });
 
         if (!user) {
             return res.status(404).json({ message: 'Not Found', details: 'User not found' });
         }
 
-        // Send back meaningful user information
         return res.json({
             username: user.username,
-            score: user.score, // Could be null if not set
-            completedTasks: user.completedTasks, // Default to empty array if no tasks
-            dailyRewardCollected: user.dailyRewardCollected // Returns false if not set
+            score: user.score,
+            completedTasks: user.completedTasks,
+            dailyRewardCollected: user.dailyRewardCollected,
         });
-
     } catch (err) {
-        console.error(`Error fetching user ${username}:`, err);
+        console.error('Error fetching user:', err);
         return res.status(500).json({ message: 'Internal Server Error', details: err.message });
     }
 });
