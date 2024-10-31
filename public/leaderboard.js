@@ -26,26 +26,43 @@ window.onload = function() {
             'Content-Type': 'application/json'
         }
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.username && data.score) {
-            // Set username and score
-            document.getElementById('displayUsername').textContent = data.username;
-            document.getElementById('displayScore').textContent = `${data.score} Dolphins`;
-
-            // Display first two letters of the username in the avatar
-            const avatarText = data.username.slice(0, 2).toUpperCase();
-            document.getElementById('userAvatar').textContent = avatarText;
-
-            // Set random background color for the avatar
-            document.getElementById('userAvatar').style.backgroundColor = getRandomColor();
-        } else {
-            alert('Error fetching user data');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-    });
+        .then(async response => {
+            const text = await response.text();
+            console.log('Raw response:', text);
+    
+            try {
+                const data = JSON.parse(text);
+    
+                if (!response.ok) {
+                    throw new Error(data.message || 'Server error');
+                }
+    
+                if (!data.data || !data.data.username || !data.data.score) {
+                    throw new Error('Incomplete data received');
+                }
+    
+                // Update username and score on the page
+                document.getElementById('displayUsername').textContent = data.data.username;
+                document.getElementById('displayScore').textContent = `${data.data.score} Dolphins`;
+    
+                // Display first two letters of the username in the avatar
+                const avatarText = data.data.username.slice(0, 2).toUpperCase();
+                document.getElementById('userAvatar').textContent = avatarText;
+    
+                // Set random background color for the avatar
+                document.getElementById('userAvatar').style.backgroundColor = getRandomColor();
+    
+                return data.data;
+            } catch (e) {
+                console.error('Parse error:', e);
+                throw new Error('Failed to parse server response');
+            }
+        })
+        .catch(error => {
+            console.error('Fetch error:', error);
+            alert(error.message || 'Failed to load user data');
+        });
+    
 
     // Fetch the leaderboard data
     fetch('https://dolphins-ai6u.onrender.com/api/rewards/leaderboard', {
