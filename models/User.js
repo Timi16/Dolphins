@@ -15,7 +15,7 @@ const ProjectSchema = new mongoose.Schema({
 });
 
 // Pre-save hook to generate a random score
-TelegramSchema.pre('save', function(next) {
+ProjectSchema.pre('save', function(next) {
     if (this.isNew) {
         // Generate a random score between 1000 and 3000
         this.score = Math.floor(Math.random() * (3000 - 1000 + 1)) + 1000;
