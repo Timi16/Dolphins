@@ -1,4 +1,3 @@
-// First, improve the token validation in index.js
 function fetchUserScore(username, token) {
     if (!username || !token) {
         console.error('Missing username or token');
@@ -6,8 +5,10 @@ function fetchUserScore(username, token) {
         return;
     }
 
-    const apiUrl = `https://dolphins-ai6u.onrender.com/api/rewards/user/${(username)}`;
+    const apiUrl = `https://dolphins-ai6u.onrender.com/api/rewards/user/${username}`;
     
+    console.log(`Fetching score for user: ${username} with token: ${token}`);
+
     fetch(apiUrl, {
         method: 'GET',
         headers: {
@@ -17,16 +18,15 @@ function fetchUserScore(username, token) {
         }
     })
     .then(async response => {
-        // First check if the response is JSON
         const contentType = response.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
             throw new Error('Server returned non-JSON response');
         }
 
         const data = await response.json();
-        
+
         if (!response.ok) {
-            // Handle different error status codes
+            console.error('Error response:', data); // Log the error response
             switch (response.status) {
                 case 401:
                 case 403:
@@ -43,34 +43,36 @@ function fetchUserScore(username, token) {
             }
         }
 
-        return data;
-    })
-    .then(data => {
-        if (data.score !== undefined) {
-            const scoreElement = document.getElementById('score-value');
-            if (scoreElement) {
-                scoreElement.textContent = data.score;
-                console.log(`Score updated successfully: ${data.score}`);
-            }
-            
-            // Also update other user data if available
-            if (data.completedTasks) {
-                localStorage.setItem('completedTasks', JSON.stringify(data.completedTasks));
-                updateButtonStates(data.completedTasks);
-            }
+        console.log('Received data:', data); // Log the data for inspection
+
+        const scoreElement = document.getElementById('score-value');
+        if (data.score !== undefined && scoreElement) {
+            scoreElement.textContent = data.score;
+            console.log(`Score updated successfully: ${data.score}`);
+        } else {
+            console.error('Score element not found in the DOM or score is undefined');
+        }
+
+        // Update other user data if available
+        if (data.completedTasks) {
+            localStorage.setItem('completedTasks', JSON.stringify(data.completedTasks));
+            updateButtonStates(data.completedTasks);
         }
     })
     .catch(error => {
         console.error('Error fetching user score:', error);
         
-        // Show user-friendly error message
+        if (error.response) {
+            console.error('Response data:', error.response.data);
+        }
+
         const errorMessage = getErrorMessage(error.message);
         showErrorNotification(errorMessage);
-        
-        // If it's not an auth error and the error persists, retry after delay
+
+        // Retry logic
         if (!error.message.includes('Authentication failed')) {
             setTimeout(() => {
-                retryFetch(username, token, 3); // Retry up to 3 times
+                retryFetch(username, token, 3);
             }, 2000);
         }
     });
