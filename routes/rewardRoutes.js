@@ -3,26 +3,6 @@ const router = express.Router();
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 
-const handleErrors = (err, req, res, next) => {
-    console.error('Error details:', err);
-    if (err.name === 'ValidationError') {
-        return res.status(400).json({ 
-            message: 'Validation Error', 
-            details: err.message 
-        });
-    }
-    if (err.name === 'MongoError' || err.name === 'MongoServerError') {
-        return res.status(503).json({ 
-            message: 'Database Error', 
-            details: 'Unable to complete database operation' 
-        });
-    }
-    res.status(500).json({ 
-        message: 'Internal Server Error',
-        details: process.env.NODE_ENV === 'development' ? err.message : 'An unexpected error occurred'
-    });
-};
-
 const authenticateJWT = (req, res, next) => {
     const authHeader = req.headers['authorization'];
     if (authHeader && authHeader.startsWith('Bearer ')) {
@@ -117,7 +97,7 @@ router.get('/generate-invite/:username',authenticateJWT, async (req, res) => {
 });
 
 // Get user score and tasks
-router.get('/user/:username', authenticateJWT, async (req, res, next) => {
+router.get('/user/:username', authenticateJWT, async (req, res) => {
     const { username } = req.params;
 
     if (!username) {
@@ -125,23 +105,19 @@ router.get('/user/:username', authenticateJWT, async (req, res, next) => {
     }
 
     try {
+        // Use User model to fetch user data
         const user = await User.findOne({ username });
 
         if (!user) {
             return res.status(404).json({ message: 'Not Found', details: 'User not found' });
         }
 
-        // Update lastFetch to the current date
-        user.lastFetch = new Date();
-        await user.save(); // Save the updated lastFetch field
-
-        console.log(`User data retrieved successfully for: ${username}`);
+        // Send back meaningful user information
         return res.json({
             username: user.username,
-            score: user.score || 0,
-            completedTasks: user.completedTasks || [],
-            dailyRewardCollected: user.dailyRewardCollected || false,
-            lastFetch: user.lastFetch // Send lastFetch in the response
+            score: user.score, // Could be null if not set
+            completedTasks: user.completedTasks, // Default to empty array if no tasks
+            dailyRewardCollected: user.dailyRewardCollected // Returns false if not set
         });
 
     } catch (err) {
@@ -149,6 +125,7 @@ router.get('/user/:username', authenticateJWT, async (req, res, next) => {
         return res.status(500).json({ message: 'Internal Server Error', details: err.message });
     }
 });
+
 
 // Get leaderboard data
 router.get('/leaderboard',authenticateJWT, async (req, res) => {
@@ -271,5 +248,5 @@ router.post('/update-game-score',authenticateJWT, async (req, res) => {
     }
 });
 
-router.use(handleErrors);
+
 module.exports = router;
