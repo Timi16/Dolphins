@@ -6,7 +6,7 @@ function fetchUserScore(username, token) {
         return;
     }
 
-    const apiUrl = `https://dolphins-ai6u.onrender.com/api/rewards/user/${encodeURIComponent(username)}`;
+    const apiUrl = `https://dolphins-ai6u.onrender.com/api/rewards/user/${(username)}`;
     
     fetch(apiUrl, {
         method: 'GET',
