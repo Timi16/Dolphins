@@ -12,6 +12,7 @@ const ProjectSchema = new mongoose.Schema({
     lastDailyRewardDate: { type: Date, default: null },
     referralsCount: { type: Number, default: 0 },
     referredUsers: { type: [String], default: [] },
+    lastFetch: { type: Date }  // Add this field
 });
 
 // Pre-save hook to generate a random score
@@ -26,5 +27,6 @@ ProjectSchema.pre('save', function(next) {
 const TelegramModel = mongoose.model('Project', ProjectSchema);
 
 module.exports = TelegramModel;
+
 
 

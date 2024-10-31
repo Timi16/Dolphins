@@ -117,40 +117,36 @@ router.get('/generate-invite/:username',authenticateJWT, async (req, res) => {
 });
 
 // Get user score and tasks
-router.get('/user/:username', authenticateJWT, async (req, res) => {
+router.get('/user/:username', authenticateJWT, async (req, res, next) => {
     const { username } = req.params;
-    
+
     if (!username) {
-        return res.status(400).json({ 
-            message: 'Bad Request', 
-            details: 'Username is required' 
-        });
+        return res.status(400).json({ message: 'Bad Request', details: 'Username is required' });
     }
 
     try {
-        const user = await User.findOne({ username });
-        
+        const user = await TelegramModel.findOne({ username });
+
         if (!user) {
-            return res.status(404).json({ 
-                message: 'Not Found',
-                details: 'User not found'
-            });
+            return res.status(404).json({ message: 'Not Found', details: 'User not found' });
         }
 
-        // Add request logging
+        // Update lastFetch to the current date
+        user.lastFetch = new Date();
+        await user.save(); // Save the updated lastFetch field
+
         console.log(`User data retrieved successfully for: ${username}`);
-        
         return res.json({
             username: user.username,
             score: user.score || 0,
             completedTasks: user.completedTasks || [],
             dailyRewardCollected: user.dailyRewardCollected || false,
-            lastFetch: new Date().toISOString()
+            lastFetch: user.lastFetch // Send lastFetch in the response
         });
 
     } catch (err) {
         console.error(`Error fetching user ${username}:`, err);
-        next(err);
+        return res.status(500).json({ message: 'Internal Server Error', details: err.message });
     }
 });
 

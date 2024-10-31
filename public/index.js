@@ -8,7 +8,7 @@ function fetchUserScore(username, token) {
     const apiUrl = `https://dolphins-ai6u.onrender.com/api/rewards/user/${username}`;
     
     console.log(`Fetching score for user: ${username} with token: ${token}`);
-
+    
     fetch(apiUrl, {
         method: 'GET',
         headers: {
