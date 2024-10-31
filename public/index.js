@@ -1,43 +1,74 @@
-window.onload = function() {
+// First, improve the token validation in index.js
+function checkUserLoggedIn() {
     const username = localStorage.getItem('username');
     const token = localStorage.getItem('token');
     
-    console.log('Username:', username);
-    console.log('Token:', token);
-
     if (!username || !token) {
-        alert('User not logged in.');
+        window.location.href = 'index.html'; // Redirect to login page instead of alert
+        return false;
+    }
+    return { username, token };
+}
+
+function fetchUserScore(username, token) {
+    // Add proper error handling and token validation
+    if (!token || token === 'undefined' || token === 'null') {
+        console.error('Invalid token detected');
+        window.location.href = 'index.html';
         return;
     }
 
+    fetch(`https://dolphins-ai6u.onrender.com/api/rewards/user/${username}`, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            if (response.status === 401 || response.status === 403) {
+                // Token is invalid or expired
+                localStorage.removeItem('token');
+                localStorage.removeItem('username');
+                window.location.href = 'index.html';
+                throw new Error('Authentication failed');
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.score !== undefined) {
+            const scoreElement = document.getElementById('score-value');
+            if (scoreElement) {
+                scoreElement.textContent = data.score;
+            }
+        } else {
+            console.warn('Score data not found in response');
+        }
+    })
+    .catch(error => {
+        console.error('Error fetching user score:', error);
+        if (error.message !== 'Authentication failed') {
+            // Only show alert if it's not an auth error (since we're already redirecting)
+            alert('Error loading user data. Please try refreshing the page.');
+        }
+    });
+}
+
+// Update the window.onload function to handle errors better
+window.onload = function() {
+    const userAuth = checkUserLoggedIn();
+    if (!userAuth) return; // Will redirect to login if needed
+
     // Fetch user data and update score
-    fetchUserScore(username, token);
+    fetchUserScore(userAuth.username, userAuth.token);
 
     // Update task button states
     const completedTasks = JSON.parse(localStorage.getItem('completedTasks')) || {};
     updateButtonStates(completedTasks);
 };
-
-function fetchUserScore(username, token) {
-    fetch(`https://dolphins-ai6u.onrender.com/api/rewards/user/${username}`, {
-        method: 'GET',
-        headers: {
-            'Authorization': `Bearer ${token}`
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.score) {
-            const scoreElement = document.getElementById('score-value');
-            if (scoreElement) {
-                scoreElement.textContent = data.score;
-            }
-        }
-    })
-    .catch(error => {
-        console.error('Error fetching user score:', error);
-    });
-}
 
 function updateButtonStates(completedTasks) {
     updateButtonState('watch-ads-button', completedTasks.watchAds, 'Watched');
@@ -66,16 +97,6 @@ function markAsCompleted(button, buttonText) {
     button.textContent = buttonText;
 }
 
-function checkUserLoggedIn() {
-    const username = localStorage.getItem('username');
-    const token = localStorage.getItem('token');
-    
-    if (!username || !token) {
-        alert('User not logged in.');
-        return false;
-    }
-    return { username, token };
-}
 
 function getDailyReward() {
     const user = checkUserLoggedIn();
