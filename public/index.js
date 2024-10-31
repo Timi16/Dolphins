@@ -1,65 +1,51 @@
 function fetchUserScore(username, token) {
-    return new Promise((resolve, reject) => {
-        if (!username || !token) {
-            console.error('Missing username or token');
-            reject(new Error('Missing credentials'));
-            return;
+    console.log('Fetching score for:', username, 'with token:', token);
+
+    if (!username || !token) {
+        showErrorNotification('Missing username or token');
+        return Promise.reject(new Error('Missing credentials'));
+    }
+
+    return fetch(`https://dolphins-ai6u.onrender.com/api/rewards/user/${username}`, {
+        method: 'GET',
+        headers: {
+            // Send the token directly since we're using a simple token system
+            'Authorization': token,
+            'Content-Type': 'application/json'
         }
+    })
+    .then(async response => {
+        const text = await response.text();
+        console.log('Raw response:', text);
 
-        const apiUrl = `https://dolphins-ai6u.onrender.com/api/rewards/user/${username}`;
-        
-        fetch(apiUrl, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(response => {
-            // First check if response is ok
+        try {
+            const data = JSON.parse(text);
+            
             if (!response.ok) {
-                return response.json().then(errorData => {
-                    throw new Error(errorData.message || 'Server error');
-                });
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (!data.success) {
-                throw new Error(data.message || 'Failed to fetch user data');
+                throw new Error(data.message || 'Server error');
             }
 
-            // Update UI with user data
+            if (data.success === false) {
+                throw new Error(data.message || 'Operation failed');
+            }
+
+            // Update the score if available
             const scoreElement = document.getElementById('score-value');
-            if (scoreElement && data.data.score !== undefined) {
+            if (scoreElement && data.data && data.data.score !== undefined) {
                 scoreElement.textContent = data.data.score;
-                console.log(`Score updated successfully: ${data.data.score}`);
+                console.log('Updated score:', data.data.score);
             }
 
-            // Update completed tasks if available
-            if (data.data.completedTasks) {
-                localStorage.setItem('completedTasks', JSON.stringify(data.data.completedTasks));
-                updateButtonStates(data.data.completedTasks);
-            }
-
-            resolve(data.data);
-        })
-        .catch(error => {
-            console.error('Error fetching user score:', error);
-            
-            const errorMessage = getErrorMessage(error.message);
-            showErrorNotification(errorMessage);
-            
-            // Handle authentication errors
-            if (error.message.includes('Authentication failed') || 
-                error.message.includes('jwt')) {
-                localStorage.removeItem('token');
-                localStorage.removeItem('username');
-                window.location.href = 'index.html';
-            }
-            
-            reject(error);
-        });
+            return data.data;
+        } catch (e) {
+            console.error('Parse error:', e);
+            throw new Error('Failed to parse server response');
+        }
+    })
+    .catch(error => {
+        console.error('Fetch error:', error);
+        showErrorNotification(error.message || 'Failed to load user data');
+        throw error;
     });
 }
 

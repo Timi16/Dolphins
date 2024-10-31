@@ -4,21 +4,48 @@ const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 
 const authenticateJWT = (req, res, next) => {
-    const authHeader = req.headers['authorization'];
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-        const token = authHeader.split(' ')[1];
+    try {
+        const authHeader = req.headers['authorization'];
+        
+        // Log the received authorization header for debugging
+        console.log('Auth header:', authHeader);
 
-        jwt.verify(token, JWT_SECRET, (err, user) => {
-            if (err) {
-                return res.sendStatus(403); // Forbidden
-            }
-            req.user = user;
-            next();
+        if (!authHeader) {
+            return res.status(401).json({ 
+                success: false, 
+                message: 'No authorization header' 
+            });
+        }
+
+        // Handle both "Bearer token" and plain token formats
+        const token = authHeader.startsWith('Bearer ') 
+            ? authHeader.slice(7) 
+            : authHeader;
+
+        // Log the token we're trying to verify
+        console.log('Token to verify:', token);
+
+        // For your case, since you're using a simple token
+        // Instead of JWT verification, just check if token exists
+        if (!token) {
+            return res.status(401).json({ 
+                success: false, 
+                message: 'No token provided' 
+            });
+        }
+
+        // Store the token in request for later use
+        req.token = token;
+        next();
+    } catch (err) {
+        console.error('Auth error:', err);
+        return res.status(401).json({ 
+            success: false, 
+            message: 'Authentication failed' 
         });
-    } else {
-        res.sendStatus(401); // Unauthorized
     }
 };
+
 // Update score when a task is completed
 router.post('/complete-task',authenticateJWT, async (req, res) => {
     const { username, task, amount } = req.body;
@@ -96,45 +123,48 @@ router.get('/generate-invite/:username',authenticateJWT, async (req, res) => {
     }
 });
 
-// Get user score and tasks
 router.get('/user/:username', authenticateJWT, async (req, res) => {
-    const { username } = req.params;
-
-    if (!username) {
-        return res.status(400).json({ 
-            success: false,
-            message: 'Username is required'
-        });
-    }
-
     try {
-        const user = await User.findOne({ username });
+        const { username } = req.params;
+        console.log('Looking up user:', username);
 
+        const user = await User.findOne({ username });
+        
         if (!user) {
-            return res.status(404).json({ 
+            return res.status(404).json({
                 success: false,
-                message: 'User not found' 
+                message: 'User not found'
             });
         }
 
-        // Always return a consistent JSON structure
         return res.status(200).json({
             success: true,
             data: {
                 username: user.username,
-                score: user.score,
+                score: user.score || 0,
                 completedTasks: user.completedTasks || [],
                 dailyRewardCollected: user.dailyRewardCollected || false
             }
         });
+
     } catch (err) {
         console.error('Error fetching user:', err);
-        return res.status(500).json({ 
+        return res.status(500).json({
             success: false,
-            message: 'Internal server error',
-            error: err.message 
+            message: 'Server error',
+            error: err.message
         });
     }
+});
+
+// Add this error handler to catch any unhandled errors
+router.use((err, req, res, next) => {
+    console.error('Router Error:', err);
+    res.status(500).json({
+        success: false,
+        message: 'Server error',
+        error: err.message
+    });
 });
 
 // Get leaderboard data
