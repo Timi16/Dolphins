@@ -216,23 +216,68 @@ if (!username || !token) {
 // Add function to save game score to database
 async function saveGameScore(gameScore) {
   const token = localStorage.getItem('token');
-    try {
-        const response = await fetch('https://dolphins-ai6u.onrender.com/api/rewards/update-game-score', {
-            method: 'POST',
-            headers: {
-                'Authorization': token
-            },
-            body: JSON.stringify({
-                username,
-                gameScore
-            }),
-        });
+  
+  if (!token) {
+      console.error('Authentication token not found');
+      return;
+  }
 
-        const data = await response.json();
-        if (data.newScore) {
-            localStorage.setItem('score', data.newScore);
-        }
-    } catch (error) {
-        console.error('Error saving game score:', error);
-    }
+  try {
+      // Make the API request
+      const response = await fetch('https://dolphins-ai6u.onrender.com/api/rewards/update-game-score', {
+          method: 'POST',
+          headers: {
+              'Authorization': token,
+              'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+              username,
+              gameScore
+          }),
+      });
+
+      // Get raw response text first
+      const responseText = await response.text();
+      console.log('Raw response:', responseText);
+
+      // Try to parse the response as JSON
+      let data;
+      try {
+          data = JSON.parse(responseText);
+      } catch (parseError) {
+          console.error('Failed to parse response as JSON:', parseError);
+          console.log('Raw response was:', responseText);
+          throw new Error('Invalid JSON response from server');
+      }
+
+      // Check if the response was successful
+      if (!response.ok) {
+          throw new Error(data.message || 'Server returned an error');
+      }
+
+      // Validate the response data
+      if (data.newScore === undefined) {
+          throw new Error('Response missing newScore field');
+      }
+
+      // Update local storage with new score
+      localStorage.setItem('score', data.newScore.toString());
+      console.log('Score updated successfully:', data.newScore);
+
+      return data.newScore;
+
+  } catch (error) {
+      console.error('Error in saveGameScore:', error);
+      
+      // You might want to show this to the user in your UI
+      if (error.message === 'Failed to fetch') {
+          console.error('Network error - server might be down');
+      } else if (error.message.includes('Invalid JSON')) {
+          console.error('Server returned invalid data');
+      } else {
+          console.error('Server error:', error.message);
+      }
+      
+      throw error; // Re-throw to allow caller to handle the error
+  }
 }
