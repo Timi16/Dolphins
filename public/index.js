@@ -286,37 +286,3 @@ function trackReferral(inviteCode) {
 function startGame() {
     window.location.href = 'game.html';
 }
-const userId = localStorage.getItem("userId"); // Replace with actual user ID logic
-const rewardUrl = `https://dolphins-ai6u.onrender.com/api/ads/user/${userId}`;
-
-// Initialize Adsgram Ad Controller
-const AdController = window.Adsgram.init({ blockId: "4922" });
-
-// Get the watch ads button
-const watchAdsButton = document.getElementById('watch-ads-button');
-
-watchAdsButton.addEventListener('click', () => {
-    AdController.show().then((result) => {
-        // If the user completes watching the ad, send reward request to backend
-        fetch(rewardUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ rewardStatus: 'completed' }) // Adjust payload as required
-        })
-        .then(response => response.json())
-        .then(data => {
-            alert('Reward granted!');
-            console.log('Reward response:', data);
-        })
-        .catch(error => {
-            console.error('Error processing reward:', error);
-            alert('There was an error processing the reward.');
-        });
-    }).catch((result) => {
-        // Handle cases where the ad is skipped or an error occurs
-        alert('Ad was not completed or an error occurred.');
-        console.error('Ad error:', result);
-    });
-});
