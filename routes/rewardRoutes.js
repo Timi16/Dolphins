@@ -292,15 +292,24 @@ router.get('/ads/user/:userId', authenticateJWT, async (req, res) => {
     const { userId } = req.params;
 
     try {
+        // Find the user by userId
         const user = await User.findById(userId);
         if (!user) return res.status(404).json({ message: 'User not found' });
 
+        // Award 1000 points for watching an ad
+        user.score += 1000;
+
+        // Save the updated user data
+        await user.save();
+
+        // Return the updated user data
         return res.json({
             success: true,
             data: {
                 userId: user._id,
                 username: user.username,
-                score: user.score
+                score: user.score,
+                message: '1000 points awarded for watching ad'
             }
         });
     } catch (err) {
@@ -309,6 +318,4 @@ router.get('/ads/user/:userId', authenticateJWT, async (req, res) => {
     }
 });
 
-
-
-module.exports = router;
+module.exports=router;
