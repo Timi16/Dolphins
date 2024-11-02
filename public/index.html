@@ -67,26 +67,20 @@
 
                 const data = await response.json();
                 console.log('Registration response:', data);
-
-                if (data.token) {
-                    // Store both token and username
+                if (data.token && data.userId) {
+                    // Store both token, username, and userId
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('username', username);
-                    
-                    // Initialize completed tasks
+                    localStorage.setItem('userId', data.userId);
+
                     localStorage.setItem('completedTasks', JSON.stringify({}));
-                    
-                    // Remove pending invite code
                     localStorage.removeItem('pendingInviteCode');
 
-                    // Show success message
                     alert('Registration successful!');
-
-                    // Redirect to home.html
                     window.location.href = 'home.html';
                 } else {
                     alert(data.message || 'Registration failed. Please try again.');
-                }
+                }        
             } catch (error) {
                 console.error('Error:', error);
                 alert('There was an error with the registration process.');
