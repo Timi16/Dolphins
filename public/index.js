@@ -286,7 +286,7 @@ function trackReferral(inviteCode) {
 function startGame() {
     window.location.href = 'game.html';
 }
-const userId = localStorage.setItem("userId"); // Replace with actual user ID logic
+const userId = localStorage.getItem("userId"); // Replace with actual user ID logic
 const rewardUrl = `https://dolphins-ai6u.onrender.com/api/ads/user/${userId}`;
 
 // Initialize Adsgram Ad Controller
