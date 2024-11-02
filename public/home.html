@@ -6,6 +6,8 @@
     <meta http-equiv="Permissions-Policy" content="clipboard-write=(self)">
     <link rel="stylesheet" type="text/css" href="index.css">
     <title>Dolphins App</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -61,6 +63,23 @@
             Friends
         </a>
     </nav>
+
     <script src="index.js"></script>
+    <script>
+        // Initialize Adsgram AdController
+        const AdController = window.Adsgram.init({ blockId: "4920" });
+
+        // Define watchAds function to show ad
+        function watchAds() {
+            AdController.show().then((result) => {
+                // User watched ad till the end
+                // Reward user here
+                alert('Reward');
+            }).catch((result) => {
+                // User skipped ad or an error occurred
+                alert(JSON.stringify(result, null, 4));
+            });
+        }
+    </script>
 </body>
 </html>
