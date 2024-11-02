@@ -290,7 +290,7 @@ const userId = localStorage.getItem("userId"); // Replace with actual user ID lo
 const rewardUrl = `https://dolphins-ai6u.onrender.com/api/ads/user/${userId}`;
 
 // Initialize Adsgram Ad Controller
-const AdController = window.Adsgram.init({ blockId: "4920" });
+const AdController = window.Adsgram.init({ blockId: "4922" });
 
 // Get the watch ads button
 const watchAdsButton = document.getElementById('watch-ads-button');
