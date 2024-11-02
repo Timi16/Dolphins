@@ -15,29 +15,19 @@ router.post('/register', async (req, res) => {
         const existingUser = await User.findOne({ username });
         if (existingUser) return res.status(400).json({ message: 'User already exists' });
 
-        // Create new user
+        // Create new user with generated userId
         const newUser = new User({ username });
 
-        // If an invite code is provided, find the referrer
+        // If an invite code is provided, find and update referrer
         if (inviteCode) {
             const referrer = await User.findOne({ inviteCode });
-
             if (referrer) {
-                // Check if this user has already been referred
                 if (!referrer.referredUsers.includes(username)) {
                     referrer.referredUsers.push(username);
                     referrer.referralsCount++;
 
-                    // Award points for the first 5 referrals
-                    if (referrer.referralsCount <= 5) {
-                        referrer.score += 100;  // 100 points per referral
-                    }
-                    // If the referrer has exactly 5 referrals, award a bonus of 25,000 points
-                    if (referrer.referralsCount === 5) {
-                        referrer.score += 25000;  // Award bonus of 25,000 points
-                    }
-
-                    // Save the referrer updates
+                    if (referrer.referralsCount <= 5) referrer.score += 100;
+                    if (referrer.referralsCount === 5) referrer.score += 25000;
                     await referrer.save();
                 }
             }
@@ -46,14 +36,19 @@ router.post('/register', async (req, res) => {
         // Save the new user to the database
         await newUser.save();
 
-        // Generate a JWT token for the user
-        const token = jwt.sign({ username: newUser.username }, JWT_SECRET, { expiresIn: '365d' }); // Token valid for 1 year
+        // Generate a JWT token including the userId
+        const token = jwt.sign({ userId: newUser.userId, username: newUser.username }, JWT_SECRET, { expiresIn: '365d' });
 
-        // Send the token back to the client with a success message
-        return res.status(201).json({ message: 'User registered successfully', token });
+        // Send the userId and token back to the client
+        return res.status(201).json({
+            message: 'User registered successfully',
+            token,
+            userId: newUser.userId,
+        });
     } catch (err) {
         return res.status(500).json({ message: 'Server error', error: err });
     }
 });
+
 
 module.exports = router;

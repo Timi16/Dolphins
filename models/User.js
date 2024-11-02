@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
-
+const { v4: uuidv4 } = require('uuid');
 const TelegramSchema = new mongoose.Schema({
+    userId: { type: String, default: uuidv4 },
     username: { type: String, required: true, unique: true },
     score: { type: Number },  // Remove the default value
     completedTasks: { type: [String], default: [] },
