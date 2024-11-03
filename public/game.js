@@ -8,8 +8,8 @@ let lastBallColor = null;
 let consecutiveSameColor = 0;
 let isTimeFrozen = false;
 const maxConsecutiveSameColor = 2;
-let activeElements = 0;  // Track number of active balls
-const maxElements = 15;  // Maximum number of balls allowed
+let activeElements = 0;
+const maxElements = 15;
 
 const gameContainer = document.getElementById('game-container');
 const scoreElement = document.getElementById('score');
@@ -22,19 +22,79 @@ const exitGameBtn = document.getElementById('exit-game');
 
 function getBallSpawnRate() {
   const width = window.innerWidth;
-  if (width < 768) return 800;     // Slower on mobile
+  if (width < 768) return 800;
   if (width < 1024) return 600;
   return 400;
 }
 
 function getRandomVelocity() {
   const width = window.innerWidth;
-  const speedMultiplier = width < 768 ? 1.5 : 2.5;  // Slower on mobile
+  const speedMultiplier = width < 768 ? 1.5 : 2.5;
   
   return {
     x: (Math.random() - 0.5) * speedMultiplier,
     y: Math.random() * speedMultiplier + 1
   };
+}
+
+function createBall() {
+  if (isGameOver || isPaused || activeElements >= maxElements) return;
+  
+  const ball = document.createElement('div');
+  ball.className = 'ball';
+  
+  // Control random distribution
+  let isBlue;
+  if (lastBallColor === null) {
+    isBlue = Math.random() < 0.7;
+  } else if (consecutiveSameColor >= maxConsecutiveSameColor) {
+    isBlue = !lastBallColor;
+  } else {
+    isBlue = Math.random() < 0.7;
+  }
+  
+  if (isBlue === lastBallColor) {
+    consecutiveSameColor++;
+  } else {
+    consecutiveSameColor = 1;
+  }
+  lastBallColor = isBlue;
+  
+  ball.style.background = isBlue ? '#0077ff' : '#000000';
+  ball.style.border = '3px solid white';
+  
+  const rect = gameContainer.getBoundingClientRect();
+  const size = parseInt(getComputedStyle(ball).width) || 55;
+  
+  ball.style.left = `${Math.random() * (rect.width - size)}px`;
+  ball.style.top = '-50px';
+  
+  ball.velocity = getRandomVelocity();
+  
+  const clickHandler = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isGameOver && !isPaused && !isTimeFrozen) {
+      if (isBlue) {
+        score += 1;
+        ball.style.transform = 'scale(1.2)';
+        ball.style.background = '#00ff00';
+      } else {
+        score = Math.max(0, score - 2);
+        ball.style.transform = 'scale(1.2)';
+        ball.style.background = '#ff0000';
+      }
+      scoreElement.textContent = `Score: ${score}`;
+      activeElements--;
+      setTimeout(() => ball.remove(), 100);
+    }
+  };
+  
+  ball.addEventListener('click', clickHandler);
+  ball.addEventListener('touchstart', clickHandler, { passive: false });
+  
+  activeElements++;
+  gameContainer.appendChild(ball);
 }
 
 function createSpecialBall() {
@@ -76,61 +136,6 @@ function createSpecialBall() {
   gameContainer.appendChild(ball);
 }
 
-function createBallGroup() {
-  if (isGameOver || isPaused) return;
-  
-  // Adjust group size based on screen size and current ball count
-  const width = window.innerWidth;
-  const maxGroupSize = width < 768 ? 2 : 3;  // Smaller groups on mobile
-  const remainingSpace = maxElements - activeElements;
-  const groupSize = Math.min(Math.floor(Math.random() * maxGroupSize) + 1, remainingSpace);
-  
-  if (groupSize <= 0) return;  // Skip if we're at max capacity
-  
-  for (let i = 0; i < groupSize; i++) {
-    const ball = document.createElement('div');
-    ball.className = 'ball';
-    
-    const isBlue = Math.random() < 0.8;
-    
-    ball.style.background = isBlue ? '#0077ff' : '#000000';
-    ball.style.border = '3px solid white';
-    
-    const rect = gameContainer.getBoundingClientRect();
-    const size = parseInt(getComputedStyle(ball).width) || 55;
-    
-    ball.style.left = `${Math.random() * (rect.width - size)}px`;
-    ball.style.top = '-50px';
-    
-    ball.velocity = getRandomVelocity();
-    
-    const clickHandler = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (!isGameOver && !isPaused && !isTimeFrozen) {
-        if (isBlue) {
-          score += 1;
-          ball.style.transform = 'scale(1.2)';
-          ball.style.background = '#00ff00';
-        } else {
-          score = Math.max(0, score - 2);
-          ball.style.transform = 'scale(1.2)';
-          ball.style.background = '#ff0000';
-        }
-        scoreElement.textContent = `Score: ${score}`;
-        activeElements--;
-        setTimeout(() => ball.remove(), 100);
-      }
-    };
-    
-    ball.addEventListener('click', clickHandler);
-    ball.addEventListener('touchstart', clickHandler, { passive: false });
-    
-    activeElements++;
-    gameContainer.appendChild(ball);
-  }
-}
-
 function updateBallPositions() {
   if (isPaused || isTimeFrozen) return;
   
@@ -162,41 +167,28 @@ function updateBallPositions() {
   });
 }
 
-// Simplified CSS for better performance
-const style = document.createElement('style');
-style.textContent = `
-  .ball.frozen {
-    filter: brightness(0.7);
-    pointer-events: auto;
+function gameLoop(currentTime) {
+  if (!isGameOver && !isPaused) {
+    const deltaTime = currentTime - lastTime;
+    
+    if (deltaTime >= getBallSpawnRate()) {
+      createBall();
+      lastTime = currentTime;
+      
+      if (Math.random() < 0.02 && !isTimeFrozen) {
+        createSpecialBall();
+      }
+    }
+    
+    updateBallPositions();
+    requestAnimationFrame(gameLoop);
   }
-  .ball.special {
-    transform: scale(1.1);
-  }
-`;
-document.head.appendChild(style);
+}
 
 function clearBalls() {
   const balls = document.querySelectorAll('.ball');
   balls.forEach(ball => ball.remove());
   activeElements = 0;
-}
-
-function gameLoop(currentTime) {
-  if (!isGameOver && !isPaused) {
-    const deltaTime = currentTime - lastTime;
-    
-    if (deltaTime >= getBallSpawnRate() && activeElements < maxElements) {
-      createBallGroup();
-      lastTime = currentTime;
-      
-      if (Math.random() < 0.02 && !isTimeFrozen && activeElements < maxElements) {
-        createSpecialBall();
-      }
-    }
-    
-    requestAnimationFrame(gameLoop);
-    updateBallPositions();
-  }
 }
 
 function updateTimer() {
@@ -250,14 +242,36 @@ function togglePause() {
   }
 }
 
-// Get username from localStorage
+// Style definition
+const style = document.createElement('style');
+style.textContent = `
+  .ball.frozen {
+    filter: brightness(0.7);
+    pointer-events: auto;
+  }
+  .ball.special {
+    transform: scale(1.1);
+  }
+`;
+document.head.appendChild(style);
+
+// Initialize game
 const username = localStorage.getItem('username');
 const token = localStorage.getItem('token');
 if (!username || !token) {
     window.location.href = 'home.html';
 }
 
-// Add function to save game score to database
+// Start the game loop
+requestAnimationFrame(gameLoop);
+
+// Start the timer
+setInterval(updateTimer, 1000);
+
+// Add event listeners
+playAgainBtn.addEventListener('click', resetGame);
+pauseBtn.addEventListener('click', togglePause);
+
 async function saveGameScore(gameScore) {
   const token = localStorage.getItem('token');
   
