@@ -1,35 +1,197 @@
-  let score = 0;
-  let isGameOver = false;
-  let isPaused = false;
-  let displayedSeconds = 300;
-  let actualSeconds = 0;
-  let lastTime = performance.now();
-  let lastBallColor = null;
-  let consecutiveSameColor = 0;
-  const maxConsecutiveSameColor = 2;
+let score = 0;
+let isGameOver = false;
+let isPaused = false;
+let displayedSeconds = 300;
+let actualSeconds = 0;
+let lastTime = performance.now();
+let lastBallColor = null;
+let consecutiveSameColor = 0;
+let isTimeFrozen = false;
+const maxConsecutiveSameColor = 2;
 
-  const gameContainer = document.getElementById('game-container');
-  const scoreElement = document.getElementById('score');
-  const timerElement = document.getElementById('timer');
-  const pauseBtn = document.getElementById('pause-btn');
-  const menuOverlay = document.querySelector('.menu-overlay');
-  const finalScoreSpan = document.getElementById('final-score');
-  const playAgainBtn = document.getElementById('play-again');
-  const exitGameBtn = document.getElementById('exit-game');
+const gameContainer = document.getElementById('game-container');
+const scoreElement = document.getElementById('score');
+const timerElement = document.getElementById('timer');
+const pauseBtn = document.getElementById('pause-btn');
+const menuOverlay = document.querySelector('.menu-overlay');
+const finalScoreSpan = document.getElementById('final-score');
+const playAgainBtn = document.getElementById('play-again');
+const exitGameBtn = document.getElementById('exit-game');
 
-  function getBallSpawnRate() {
-    const width = window.innerWidth;
-    if (width < 768) return 1000;
-    if (width < 1024) return 800;
-    return 600;
-  }
+function getBallSpawnRate() {
+  // Faster spawn rate
+  const width = window.innerWidth;
+  if (width < 768) return 300;  // Increased spawn rate
+  if (width < 1024) return 200;
+  return 150;  // Much faster for larger screens
+}
 
-  function getRandomVelocity() {
-    return {
-      x: (Math.random() - 0.5) * 2,
-      y: Math.random() * 2 + 1
+function getRandomVelocity() {
+  // Faster movement
+  return {
+    x: (Math.random() - 0.5) * 4,  // Doubled horizontal speed
+    y: Math.random() * 4 + 2       // Doubled vertical speed
+  };
+}
+
+function createSpecialBall() {
+  if (isGameOver || isPaused) return;
+  
+  const ball = document.createElement('div');
+  ball.className = 'ball special';
+  ball.style.background = '#ffffff';
+  ball.style.border = '3px solid #ffff00';  // Golden border
+  ball.style.boxShadow = '0 0 10px #ffff00';  // Glowing effect
+  
+  const rect = gameContainer.getBoundingClientRect();
+  const size = parseInt(getComputedStyle(ball).width) || 55;
+  
+  ball.style.left = `${Math.random() * (rect.width - size)}px`;
+  ball.style.top = '-50px';
+  
+  ball.velocity = getRandomVelocity();
+  
+  ball.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (!isGameOver && !isPaused) {
+      isTimeFrozen = true;
+      score += 5;  // Bonus points for catching special ball
+      scoreElement.textContent = `Score: ${score}`;
+      ball.remove();
+      
+      // Freeze all existing balls
+      const balls = document.querySelectorAll('.ball');
+      balls.forEach(b => b.classList.add('frozen'));
+      
+      // Unfreeze after 5 seconds
+      setTimeout(() => {
+        isTimeFrozen = false;
+        document.querySelectorAll('.ball.frozen').forEach(b => b.classList.remove('frozen'));
+      }, 5000);
+    }
+  });
+  
+  gameContainer.appendChild(ball);
+}
+
+function createBallGroup() {
+  if (isGameOver || isPaused) return;
+  
+  // Create multiple balls at once
+  const numBalls = Math.floor(Math.random() * 3) + 3;  // 3-5 balls at once
+  
+  for (let i = 0; i < numBalls; i++) {
+    const ball = document.createElement('div');
+    ball.className = 'ball';
+    
+    // More blue balls (80% chance)
+    const isBlue = Math.random() < 0.8;
+    
+    ball.style.background = isBlue ? '#0077ff' : '#000000';
+    ball.style.border = '3px solid white';
+    
+    const rect = gameContainer.getBoundingClientRect();
+    const size = parseInt(getComputedStyle(ball).width) || 55;
+    
+    // Spread balls across the width
+    ball.style.left = `${Math.random() * (rect.width - size)}px`;
+    ball.style.top = '-50px';
+    
+    ball.velocity = getRandomVelocity();
+    
+    const clickHandler = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!isGameOver && !isPaused && !isTimeFrozen) {
+        if (isBlue) {
+          score += 1;
+          ball.style.transform = 'scale(1.2)';
+          ball.style.background = '#00ff00';
+        } else {
+          score = Math.max(0, score - 2);  // Penalty reduced to -2
+          ball.style.transform = 'scale(1.2)';
+          ball.style.background = '#ff0000';
+        }
+        scoreElement.textContent = `Score: ${score}`;
+        setTimeout(() => ball.remove(), 100);
+      }
     };
+    
+    ball.addEventListener('click', clickHandler);
+    ball.addEventListener('touchstart', clickHandler, { passive: false });
+    
+    gameContainer.appendChild(ball);
   }
+}
+
+function updateBallPositions() {
+  if (isPaused || isTimeFrozen) return;
+  
+  const balls = document.querySelectorAll('.ball');
+  const rect = gameContainer.getBoundingClientRect();
+  
+  balls.forEach(ball => {
+    if (ball.classList.contains('frozen')) return;
+    
+    const ballRect = ball.getBoundingClientRect();
+    let x = parseFloat(ball.style.left) || 0;
+    let y = parseFloat(ball.style.top) || 0;
+    
+    x += ball.velocity.x;
+    y += ball.velocity.y;
+    
+    if (x <= 0 || x + ballRect.width >= rect.width) {
+      ball.velocity.x *= -1;
+      x = x <= 0 ? 0 : rect.width - ballRect.width;
+    }
+    
+    ball.style.left = `${x}px`;
+    ball.style.top = `${y}px`;
+    
+    if (y > rect.height) {
+      ball.remove();
+    }
+  });
+}
+
+// Add CSS styles for the frozen effect
+const style = document.createElement('style');
+style.textContent = `
+  .ball.frozen {
+    animation: none !important;
+    filter: brightness(0.7);
+    pointer-events: auto;
+  }
+  .ball.special {
+    animation: pulse 1s infinite;
+  }
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+  }
+`;
+document.head.appendChild(style);
+
+function gameLoop(currentTime) {
+  if (!isGameOver && !isPaused) {
+    const deltaTime = currentTime - lastTime;
+    
+    if (deltaTime >= getBallSpawnRate()) {
+      createBallGroup();  // Spawn groups instead of single balls
+      lastTime = currentTime;
+      
+      // Randomly spawn special white ball (2% chance per spawn cycle)
+      if (Math.random() < 0.02 && !isTimeFrozen) {
+        createSpecialBall();
+      }
+    }
+    
+    updateBallPositions();
+    requestAnimationFrame(gameLoop);
+  }
+}
+
 
   function createBall() {
     if (isGameOver || isPaused) return;
@@ -172,20 +334,7 @@
       requestAnimationFrame(gameLoop);
     }
   }
-
-  function gameLoop(currentTime) {
-    if (!isGameOver && !isPaused) {
-      const deltaTime = currentTime - lastTime;
-      
-      if (deltaTime >= getBallSpawnRate()) {
-        createBall();
-        lastTime = currentTime;
-      }
-      
-      updateBallPositions();
-      requestAnimationFrame(gameLoop);
-    }
-  }
+  
 
   // Event Listeners
   pauseBtn.addEventListener('click', togglePause);

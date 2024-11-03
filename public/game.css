@@ -162,3 +162,15 @@
     top: 20px;
     right: 20px;
   }
+  .ball {
+    transition: transform 0.2s;
+  }
+  
+  .ball.special {
+    z-index: 100;
+  }
+  
+  .frozen {
+    opacity: 0.7;
+    transition: opacity 0.3s;
+  }
