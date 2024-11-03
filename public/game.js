@@ -275,19 +275,6 @@ function togglePause() {
   }
 }
 
-// Style definition
-const style = document.createElement('style');
-style.textContent = `
-  .ball.frozen {
-    filter: brightness(0.7);
-    pointer-events: auto;
-  }
-  .ball.special {
-    transform: scale(1.1);
-  }
-`;
-document.head.appendChild(style);
-
 // Initialize game
 const username = localStorage.getItem('username');
 const token = localStorage.getItem('token');
