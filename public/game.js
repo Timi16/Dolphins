@@ -97,6 +97,8 @@ function createBall() {
   gameContainer.appendChild(ball);
 }
 
+// ... (previous code remains the same until createSpecialBall function)
+
 function createSpecialBall() {
   if (isGameOver || isPaused || activeElements >= maxElements) return;
   
@@ -122,12 +124,30 @@ function createSpecialBall() {
       activeElements--;
       ball.remove();
       
+      // Only freeze the ball movement, keep them clickable
       const balls = document.querySelectorAll('.ball');
-      balls.forEach(b => b.classList.add('frozen'));
+      balls.forEach(b => {
+        b.classList.add('frozen');
+        // Save current velocity
+        b.dataset.savedVelocityX = b.velocity.x;
+        b.dataset.savedVelocityY = b.velocity.y;
+        // Temporarily stop movement
+        b.velocity = { x: 0, y: 0 };
+      });
       
       setTimeout(() => {
         isTimeFrozen = false;
-        document.querySelectorAll('.ball.frozen').forEach(b => b.classList.remove('frozen'));
+        document.querySelectorAll('.ball.frozen').forEach(b => {
+          b.classList.remove('frozen');
+          // Restore saved velocity
+          b.velocity = {
+            x: parseFloat(b.dataset.savedVelocityX) || 0,
+            y: parseFloat(b.dataset.savedVelocityY) || 0
+          };
+          // Clean up dataset
+          delete b.dataset.savedVelocityX;
+          delete b.dataset.savedVelocityY;
+        });
       }, 5000);
     }
   });
@@ -135,6 +155,19 @@ function createSpecialBall() {
   activeElements++;
   gameContainer.appendChild(ball);
 }
+
+// Update the style to only affect visual appearance, not pointer events
+const style = document.createElement('style');
+style.textContent = `
+  .ball.frozen {
+    filter: brightness(0.7);
+    /* Removed pointer-events property to keep balls clickable */
+  }
+  .ball.special {
+    transform: scale(1.1);
+  }
+`;
+document.head.appendChild(style);
 
 function updateBallPositions() {
   if (isPaused || isTimeFrozen) return;
