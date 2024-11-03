@@ -8,6 +8,8 @@ let lastBallColor = null;
 let consecutiveSameColor = 0;
 let isTimeFrozen = false;
 const maxConsecutiveSameColor = 2;
+let activeElements = 0;  // Track number of active balls
+const maxElements = 15;  // Maximum number of balls allowed
 
 const gameContainer = document.getElementById('game-container');
 const scoreElement = document.getElementById('score');
@@ -19,29 +21,29 @@ const playAgainBtn = document.getElementById('play-again');
 const exitGameBtn = document.getElementById('exit-game');
 
 function getBallSpawnRate() {
-  // Faster spawn rate
   const width = window.innerWidth;
-  if (width < 768) return 300;  // Increased spawn rate
-  if (width < 1024) return 200;
-  return 150;  // Much faster for larger screens
+  if (width < 768) return 800;     // Slower on mobile
+  if (width < 1024) return 600;
+  return 400;
 }
 
 function getRandomVelocity() {
-  // Faster movement
+  const width = window.innerWidth;
+  const speedMultiplier = width < 768 ? 1.5 : 2.5;  // Slower on mobile
+  
   return {
-    x: (Math.random() - 0.5) * 4,  // Doubled horizontal speed
-    y: Math.random() * 4 + 2       // Doubled vertical speed
+    x: (Math.random() - 0.5) * speedMultiplier,
+    y: Math.random() * speedMultiplier + 1
   };
 }
 
 function createSpecialBall() {
-  if (isGameOver || isPaused) return;
+  if (isGameOver || isPaused || activeElements >= maxElements) return;
   
   const ball = document.createElement('div');
   ball.className = 'ball special';
   ball.style.background = '#ffffff';
-  ball.style.border = '3px solid #ffff00';  // Golden border
-  ball.style.boxShadow = '0 0 10px #ffff00';  // Glowing effect
+  ball.style.border = '3px solid #ffff00';
   
   const rect = gameContainer.getBoundingClientRect();
   const size = parseInt(getComputedStyle(ball).width) || 55;
@@ -55,15 +57,14 @@ function createSpecialBall() {
     e.preventDefault();
     if (!isGameOver && !isPaused) {
       isTimeFrozen = true;
-      score += 5;  // Bonus points for catching special ball
+      score += 5;
       scoreElement.textContent = `Score: ${score}`;
+      activeElements--;
       ball.remove();
       
-      // Freeze all existing balls
       const balls = document.querySelectorAll('.ball');
       balls.forEach(b => b.classList.add('frozen'));
       
-      // Unfreeze after 5 seconds
       setTimeout(() => {
         isTimeFrozen = false;
         document.querySelectorAll('.ball.frozen').forEach(b => b.classList.remove('frozen'));
@@ -71,20 +72,25 @@ function createSpecialBall() {
     }
   });
   
+  activeElements++;
   gameContainer.appendChild(ball);
 }
 
 function createBallGroup() {
   if (isGameOver || isPaused) return;
   
-  // Create multiple balls at once
-  const numBalls = Math.floor(Math.random() * 3) + 3;  // 3-5 balls at once
+  // Adjust group size based on screen size and current ball count
+  const width = window.innerWidth;
+  const maxGroupSize = width < 768 ? 2 : 3;  // Smaller groups on mobile
+  const remainingSpace = maxElements - activeElements;
+  const groupSize = Math.min(Math.floor(Math.random() * maxGroupSize) + 1, remainingSpace);
   
-  for (let i = 0; i < numBalls; i++) {
+  if (groupSize <= 0) return;  // Skip if we're at max capacity
+  
+  for (let i = 0; i < groupSize; i++) {
     const ball = document.createElement('div');
     ball.className = 'ball';
     
-    // More blue balls (80% chance)
     const isBlue = Math.random() < 0.8;
     
     ball.style.background = isBlue ? '#0077ff' : '#000000';
@@ -93,7 +99,6 @@ function createBallGroup() {
     const rect = gameContainer.getBoundingClientRect();
     const size = parseInt(getComputedStyle(ball).width) || 55;
     
-    // Spread balls across the width
     ball.style.left = `${Math.random() * (rect.width - size)}px`;
     ball.style.top = '-50px';
     
@@ -108,11 +113,12 @@ function createBallGroup() {
           ball.style.transform = 'scale(1.2)';
           ball.style.background = '#00ff00';
         } else {
-          score = Math.max(0, score - 2);  // Penalty reduced to -2
+          score = Math.max(0, score - 2);
           ball.style.transform = 'scale(1.2)';
           ball.style.background = '#ff0000';
         }
         scoreElement.textContent = `Score: ${score}`;
+        activeElements--;
         setTimeout(() => ball.remove(), 100);
       }
     };
@@ -120,6 +126,7 @@ function createBallGroup() {
     ball.addEventListener('click', clickHandler);
     ball.addEventListener('touchstart', clickHandler, { passive: false });
     
+    activeElements++;
     gameContainer.appendChild(ball);
   }
 }
@@ -149,49 +156,48 @@ function updateBallPositions() {
     ball.style.top = `${y}px`;
     
     if (y > rect.height) {
+      activeElements--;
       ball.remove();
     }
   });
 }
 
-// Add CSS styles for the frozen effect
+// Simplified CSS for better performance
 const style = document.createElement('style');
 style.textContent = `
   .ball.frozen {
-    animation: none !important;
     filter: brightness(0.7);
     pointer-events: auto;
   }
   .ball.special {
-    animation: pulse 1s infinite;
-  }
-  @keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-    100% { transform: scale(1); }
+    transform: scale(1.1);
   }
 `;
 document.head.appendChild(style);
+
+function clearBalls() {
+  const balls = document.querySelectorAll('.ball');
+  balls.forEach(ball => ball.remove());
+  activeElements = 0;
+}
 
 function gameLoop(currentTime) {
   if (!isGameOver && !isPaused) {
     const deltaTime = currentTime - lastTime;
     
-    if (deltaTime >= getBallSpawnRate()) {
-      createBallGroup();  // Spawn groups instead of single balls
+    if (deltaTime >= getBallSpawnRate() && activeElements < maxElements) {
+      createBallGroup();
       lastTime = currentTime;
       
-      // Randomly spawn special white ball (2% chance per spawn cycle)
-      if (Math.random() < 0.02 && !isTimeFrozen) {
+      if (Math.random() < 0.02 && !isTimeFrozen && activeElements < maxElements) {
         createSpecialBall();
       }
     }
     
-    updateBallPositions();
     requestAnimationFrame(gameLoop);
+    updateBallPositions();  // Update positions less frequently on mobile
   }
 }
-
 
   function createBall() {
     if (isGameOver || isPaused) return;
