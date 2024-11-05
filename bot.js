@@ -25,4 +25,6 @@ bot.on('message', (msg) => {
       bot.sendMessage(chatId, "Welcome back! Here’s the project info:\n\n" + message, { parse_mode: 'Markdown' });
     }
   });
-  
+
+
+  module.exports=bot;
