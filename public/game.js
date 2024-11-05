@@ -98,26 +98,24 @@ function createBall() {
   activeElements++;
   gameContainer.appendChild(ball);
 }
-
-
 // ... (previous code remains the same until createSpecialBall function)
 
 function createSpecialBall() {
   if (isGameOver || isPaused || activeElements >= maxElements) return;
-  
+
   const ball = document.createElement('div');
   ball.className = 'ball special';
   ball.style.background = '#ffffff';
   ball.style.border = '3px solid #ffff00';
-  
+
   const rect = gameContainer.getBoundingClientRect();
   const size = parseInt(getComputedStyle(ball).width) || 55;
-  
+
   ball.style.left = `${Math.random() * (rect.width - size)}px`;
   ball.style.top = '-50px';
-  
+
   ball.velocity = getRandomVelocity();
-  
+
   ball.addEventListener('click', (e) => {
     e.preventDefault();
     if (!isGameOver && !isPaused) {
@@ -126,18 +124,19 @@ function createSpecialBall() {
       scoreElement.textContent = `Score: ${score}`;
       activeElements--;
       ball.remove();
-      
-      // Only freeze the ball movement, keep them clickable
+
+      // Only freeze movement, keep them clickable
       const balls = document.querySelectorAll('.ball');
       balls.forEach(b => {
         b.classList.add('frozen');
         // Save current velocity
         b.dataset.savedVelocityX = b.velocity.x;
         b.dataset.savedVelocityY = b.velocity.y;
-        // Temporarily stop movement
+        // Stop movement
         b.velocity = { x: 0, y: 0 };
       });
-      
+
+      // Unfreeze movement after 5 seconds
       setTimeout(() => {
         isTimeFrozen = false;
         document.querySelectorAll('.ball.frozen').forEach(b => {
@@ -154,23 +153,25 @@ function createSpecialBall() {
       }, 5000);
     }
   });
-  
+
   activeElements++;
   gameContainer.appendChild(ball);
 }
+
+ 
 
 // Update the style to only affect visual appearance, not pointer events
 const style = document.createElement('style');
 style.textContent = `
   .ball.frozen {
     filter: brightness(0.7);
-    /* Removed pointer-events property to keep balls clickable */
   }
   .ball.special {
     transform: scale(1.1);
   }
 `;
 document.head.appendChild(style);
+
 
 function updateBallPositions() {
   if (isPaused || isTimeFrozen) return;
