@@ -5,17 +5,27 @@ body, html {
     justify-content: center;
     align-items: center;
     background-color: black;
+    font-family: Arial, sans-serif;
 }
 
 .loading-container {
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-direction: column;
     height: 100vh;
+    text-align: center;
+}
+
+.welcome-message {
+    font-size: 30px; /* Adjust size as needed */
+    color: white;
+    margin-bottom: 20px; /* Space between the message and emoji */
+    animation: fadeIn 1s ease-in-out;
 }
 
 .splash {
-    font-size: 100px; /* Adjust size to make it larger */
+    font-size: 100px; /* Adjust size for the dolphin emoji */
     color: white;
     animation: pulse 1.5s infinite;
 }
@@ -28,3 +38,13 @@ body, html {
         transform: scale(1.2);
     }
 }
+
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
