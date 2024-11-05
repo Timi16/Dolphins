@@ -39,11 +39,11 @@ function getRandomVelocity() {
 
 function createBall() {
   if (isGameOver || isPaused || activeElements >= maxElements) return;
-  
+
   const ball = document.createElement('div');
   ball.className = 'ball';
-  
-  // Control random distribution
+
+  // Set ball color with controlled randomness
   let isBlue;
   if (lastBallColor === null) {
     isBlue = Math.random() < 0.7;
@@ -63,15 +63,20 @@ function createBall() {
   ball.style.background = isBlue ? '#0077ff' : '#000000';
   ball.style.border = '3px solid white';
   
+  // Reduce ball size for smoother performance
+  ball.style.width = '30px';
+  ball.style.height = '30px';
+
+  // Spawn balls along a fixed line
   const rect = gameContainer.getBoundingClientRect();
-  const size = parseInt(getComputedStyle(ball).width) || 55;
+  const leftPosition = Math.random() * (rect.width - 30); // Adjust according to new size
   
-  ball.style.left = `${Math.random() * (rect.width - size)}px`;
-  ball.style.top = '-50px';
-  
+  ball.style.left = `${leftPosition}px`;
+  ball.style.top = '50px'; // Fixed top position for a single line
+
   ball.velocity = getRandomVelocity();
-  
-  const clickHandler = (e) => {
+
+  ball.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
     if (!isGameOver && !isPaused && !isTimeFrozen) {
@@ -88,14 +93,12 @@ function createBall() {
       activeElements--;
       setTimeout(() => ball.remove(), 100);
     }
-  };
-  
-  ball.addEventListener('click', clickHandler);
-  ball.addEventListener('touchstart', clickHandler, { passive: false });
-  
+  });
+
   activeElements++;
   gameContainer.appendChild(ball);
 }
+
 
 // ... (previous code remains the same until createSpecialBall function)
 
@@ -291,6 +294,9 @@ setInterval(updateTimer, 1000);
 // Add event listeners
 playAgainBtn.addEventListener('click', resetGame);
 pauseBtn.addEventListener('click', togglePause);
+exitGameBtn.addEventListener('click', () => {
+  window.location.href = 'home.html';
+});
 
 async function saveGameScore(gameScore) {
   const token = localStorage.getItem('token');
