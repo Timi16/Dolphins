@@ -174,7 +174,7 @@ function getDailyReward() {
             markAsCompleted(document.getElementById('daily-reward-button'), 'Collected');
             saveCompletionStatus('dailyReward');
         } else {
-            alert(data.message || 'Failed to get daily reward.');
+            return
         }
     })
     .catch(error => {
@@ -198,7 +198,6 @@ function earnReward(task, amount) {
         if (data.newScore) {
             document.getElementById('score-value').textContent = data.newScore;
             localStorage.setItem('score', data.newScore);
-            alert(data.message || 'Task completed successfully.');
 
             // Mark the task as completed
             if (task === 'ton_transaction') {
@@ -209,7 +208,7 @@ function earnReward(task, amount) {
                 saveCompletionStatus('subscribeMouse');
             }
         } else {
-            alert(data.message || 'Failed to complete task.');
+            return
         }
     })
     .catch(error => {
@@ -232,7 +231,6 @@ function generateInviteLink() {
     .then(data => {
         const inviteLink = data.inviteLink;
         navigator.clipboard.writeText(inviteLink).then(() => {
-            alert('Invite link copied to clipboard!');
             markAsCompleted(document.getElementById('invite-friends-button'), 'Sent');
             saveCompletionStatus('inviteFriends');
         });
@@ -247,7 +245,6 @@ function generateInviteLink() {
     })
     .catch(error => {
         console.error('Error generating invite link:', error);
-        alert('Failed to generate invite link.');
     });
 }
 
@@ -273,9 +270,8 @@ function trackReferral(inviteCode) {
     .then(data => {
         if (data.newScore) {
             document.getElementById('score-value').textContent = data.newScore;
-            alert(data.message || 'Referral tracked successfully.');
         } else {
-            alert(data.message || 'Failed to track referral.');
+            return
         }
     })
     .catch(error => {

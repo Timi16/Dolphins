@@ -14,7 +14,6 @@ window.onload = function() {
     const token = localStorage.getItem('token'); // Get token from local storage
 
     if (!username || !token) {
-        alert('User not logged in.');
         return;
     }
 

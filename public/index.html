@@ -42,7 +42,6 @@
 
             const username = document.getElementById('username').value.trim();
             if (username === "") {
-                alert("Please enter a username.");
                 return;
             }
 
@@ -75,11 +74,9 @@
 
                     localStorage.setItem('completedTasks', JSON.stringify({}));
                     localStorage.removeItem('pendingInviteCode');
-
-                    alert('Registration successful!');
                     window.location.href = 'home.html';
                 } else {
-                    alert(data.message || 'Registration failed. Please try again.');
+                    return 
                 }        
             } catch (error) {
                 console.error('Error:', error);

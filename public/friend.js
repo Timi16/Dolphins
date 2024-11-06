@@ -36,12 +36,9 @@ function handleInviteCode(inviteCode) {
             if (!response.ok) {
                 throw new Error(data.message || 'Failed to process invite code');
             }
-
-            alert(data.message);
         })
         .catch((error) => {
             console.error('Error processing invite code:', error);
-            alert('An error occurred while processing the invite code.');
         });
 }
 function checkUserLoggedIn() {
@@ -70,7 +67,6 @@ function generateInviteLink() {
     .then(data => {
         const inviteLink = data.inviteLink;
         navigator.clipboard.writeText(inviteLink).then(() => {
-            alert('Invite link copied to clipboard!');
         });
 
         if (navigator.share) {
@@ -83,7 +79,6 @@ function generateInviteLink() {
     })
     .catch(error => {
         console.error('Error generating invite link:', error);
-        alert('Failed to generate invite link.');
     });
 }
 
@@ -91,7 +86,6 @@ function displayInvitedFriends() {
     const username = localStorage.getItem('username');
     const token = localStorage.getItem('token');
     if (!username || !token) {
-        alert('Please log in to view invited friends.');
         return;
     }
 
@@ -133,6 +127,5 @@ function displayInvitedFriends() {
         })
         .catch((error) => {
             console.error('Error fetching invited friends:', error);
-            alert('An error occurred while loading invited friends.');
         });
 }
