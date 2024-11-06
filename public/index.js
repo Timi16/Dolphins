@@ -282,3 +282,53 @@ function trackReferral(inviteCode) {
 function startGame() {
     window.location.href = 'game.html';
 }
+function trackReferralStatus() {
+    const user = checkUserLoggedIn();
+    if (!user) return;
+
+    fetch(`https://dolphins-ai6u.onrender.com/api/rewards/referrals/${user.username}`, {
+        method: 'GET',
+        headers: {
+            'Authorization': user.token,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.referralsCount >= 5) {
+            // Mark the task as completed if 5 or more referrals
+            markAsCompleted(document.getElementById('track-referral-button'), 'Done');
+            showNotification('Congratulations! Task completed');
+        } else {
+            // Show a notification if task is not yet complete
+            showNotification(`You have ${data.referralsCount} referrals. Invite ${5 - data.referralsCount} more friends to complete the task.`);
+        }
+    })
+    .catch(error => {
+        console.error('Error tracking referral status:', error);
+    });
+}
+
+function showNotification(message) {
+    let notification = document.getElementById('task-notification');
+    if (!notification) {
+        notification = document.createElement('div');
+        notification.id = 'task-notification';
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            z-index: 1000;
+        `;
+        document.body.appendChild(notification);
+    }
+    notification.textContent = message;
+
+    setTimeout(() => {
+        notification.remove();
+    }, 5000);
+}
