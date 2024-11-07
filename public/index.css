@@ -100,55 +100,36 @@ body {
     overflow: hidden;
 }
 
-/* Hover effect */
-.button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 102, 255, 0.3);
+/* Processing state - blue glow */
+.button.processing {
+    background: linear-gradient(45deg, #0066ff, #0052cc);
+    cursor: not-allowed;
+    animation: blueGlow 2s infinite;
 }
 
-/* Active state */
-.button:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 4px rgba(0, 102, 255, 0.2);
-}
-
-/* Completion animation */
-@keyframes completeGlow {
+@keyframes blueGlow {
     0% {
-        box-shadow: 0 0 5px #4CAF50;
+        box-shadow: 0 0 5px #0066ff;
     }
     50% {
-        box-shadow: 0 0 20px #4CAF50;
+        box-shadow: 0 0 20px #0066ff;
     }
     100% {
-        box-shadow: 0 0 5px #4CAF50;
+        box-shadow: 0 0 5px #0066ff;
     }
 }
 
-@keyframes fillGreen {
-    from {
-        background: linear-gradient(45deg, #0066ff, #0052cc);
-    }
-    to {
-        background: #4CAF50;
-    }
-}
-
-/* Processing state */
-.button.processing {
-    cursor: not-allowed;
-    animation: completeGlow 2s infinite;
-    background: linear-gradient(45deg, #0066ff, #0052cc);
-}
-
-/* Completed state */
+/* Completed state - solid green with text */
 .button.completed {
     background: #4CAF50;
+    color: white;
     box-shadow: 0 2px 4px rgba(76, 175, 80, 0.2);
-    animation: fillGreen 0.5s ease forwards;
+    width: auto;
+    min-width: 90px;
+    padding: 12px 20px;
 }
 
-/* Shine effect for completed buttons */
+/* Shine effect for completed state */
 .button.completed::after {
     content: '';
     position: absolute;
