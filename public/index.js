@@ -461,3 +461,93 @@ function redirectAndEarn(link, task, amount) {
     }
 
 }
+// Add this to your existing index.js file
+
+function initializeDailyRewardTimer() {
+    // Create timer elements if they don't exist
+    let timerContainer = document.getElementById('daily-reward-timer');
+    if (!timerContainer) {
+        const dailyRewardButton = document.getElementById('daily-reward-button');
+        if (!dailyRewardButton) return;
+
+        timerContainer = document.createElement('div');
+        timerContainer.id = 'daily-reward-timer';
+        timerContainer.style.cssText = `
+            font-family: 'Arial', sans-serif;
+            text-align: center;
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        `;
+
+        // Insert timer container after the daily reward button
+        dailyRewardButton.parentNode.insertBefore(timerContainer, dailyRewardButton.nextSibling);
+    }
+
+    function updateTimer() {
+        const lastClaimTime = localStorage.getItem('lastDailyRewardClaim');
+        const now = new Date().getTime();
+        
+        if (!lastClaimTime || now - parseInt(lastClaimTime) >= 24 * 60 * 60 * 1000) {
+            timerContainer.innerHTML = `
+                <div style="color: #4CAF50; font-weight: bold;">
+                    🎁 Reward Available!
+                </div>
+            `;
+            enableDailyRewardButton();
+            return;
+        }
+
+        const nextClaimTime = parseInt(lastClaimTime) + (24 * 60 * 60 * 1000);
+        const timeLeft = nextClaimTime - now;
+
+        const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
+        timerContainer.innerHTML = `
+            <div style="color: #666;">
+                <div style="font-size: 0.9em; margin-bottom: 5px;">Next Reward In:</div>
+                <div style="font-size: 1.2em; font-weight: bold; color: #2196F3;">
+                    ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}
+                </div>
+            </div>
+        `;
+        disableDailyRewardButton();
+    }
+
+    function enableDailyRewardButton() {
+        const button = document.getElementById('daily-reward-button');
+        if (button) {
+            button.disabled = false;
+            button.style.opacity = '1';
+        }
+    }
+
+    function disableDailyRewardButton() {
+        const button = document.getElementById('daily-reward-button');
+        if (button) {
+            button.disabled = true;
+            button.style.opacity = '0.5';
+        }
+    }
+
+    // Update the original getDailyReward function to work with the timer
+    const originalGetDailyReward = window.getDailyReward;
+    window.getDailyReward = function() {
+        originalGetDailyReward();
+        localStorage.setItem('lastDailyRewardClaim', new Date().getTime().toString());
+        updateTimer();
+    };
+
+    // Start the timer
+    updateTimer();
+    setInterval(updateTimer, 1000);
+}
+
+// Add this to your DOMContentLoaded event listener
+document.addEventListener('DOMContentLoaded', function() {
+    initializeDailyRewardTimer();
+});
