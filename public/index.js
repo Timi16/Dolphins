@@ -396,9 +396,12 @@ function trackReferral(inviteCode) {
 function startGame() {
     window.location.href = 'game.html';
 }
-function trackReferralStatus() {
+
+function trackReferralStatus(targetReferrals, rewardAmount) {
     const user = checkUserLoggedIn();
     if (!user) return;
+
+    const buttonId = `track-referral-button-${targetReferrals}`;
 
     fetch(`https://dolphins-ai6u.onrender.com/api/rewards/referrals/${user.username}`, {
         method: 'GET',
@@ -409,17 +412,20 @@ function trackReferralStatus() {
     })
     .then(response => response.json())
     .then(data => {
-        if (data.referralsCount >= 5) {
-            // Mark the task as completed if 5 or more referrals
-            markAsCompleted(document.getElementById('track-referral-button'), 'Done');
-            showNotification('Congratulations! Task completed');
+        if (data.referralsCount >= targetReferrals) {
+            // Mark the specific task as completed
+            markAsCompleted(document.getElementById(buttonId), 'Done');
+            showNotification(`Congratulations! ${targetReferrals} referrals task completed!`);
         } else {
-            // Show a notification if task is not yet complete
-            showNotification(`You have ${data.referralsCount} referrals. Invite ${5 - data.referralsCount} more friends to complete the task.`);
+            // Show progress for the specific target
+            const remaining = targetReferrals - data.referralsCount;
+            const progressMessage = `Progress: ${data.referralsCount}/${targetReferrals} referrals\nInvite ${remaining} more friends to earn ${rewardAmount} points!`;
+            showNotification(progressMessage);
         }
     })
     .catch(error => {
         console.error('Error tracking referral status:', error);
+        showNotification('Failed to check referral status');
     });
 }
 
@@ -434,16 +440,53 @@ function showNotification(message) {
             right: 20px;
             background-color: #007bff;
             color: white;
-            padding: 10px 20px;
-            border-radius: 5px;
+            padding: 15px 25px;
+            border-radius: 8px;
             z-index: 1000;
+            font-family: Arial, sans-serif;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            white-space: pre-line;
+            line-height: 1.4;
         `;
         document.body.appendChild(notification);
     }
     notification.textContent = message;
 
+    // Add a progress bar if the message contains progress information
+    if (message.includes('Progress:')) {
+        const progressData = message.match(/(\d+)\/(\d+)/);
+        if (progressData) {
+            const [, current, total] = progressData;
+            const percentage = (current / total) * 100;
+            
+            const progressBar = document.createElement('div');
+            progressBar.style.cssText = `
+                width: 100%;
+                height: 4px;
+                background-color: rgba(255, 255, 255, 0.3);
+                border-radius: 2px;
+                margin-top: 8px;
+            `;
+            
+            const progress = document.createElement('div');
+            progress.style.cssText = `
+                width: ${percentage}%;
+                height: 100%;
+                background-color: white;
+                border-radius: 2px;
+                transition: width 0.3s ease;
+            `;
+            
+            progressBar.appendChild(progress);
+            notification.appendChild(progressBar);
+        }
+    }
+
     setTimeout(() => {
-        notification.remove();
+        notification.style.opacity = '0';
+        notification.style.transform = 'translateX(100%)';
+        notification.style.transition = 'all 0.5s ease';
+        setTimeout(() => notification.remove(), 500);
     }, 5000);
 }
 

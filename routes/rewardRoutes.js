@@ -236,6 +236,16 @@ router.post('/referral/:inviteCode',authenticateJWT, async (req, res) => {
                 referralsCount: referrer.referralsCount
             });
         }
+        if (referrer.referralsCount === 10) {
+            referrer.score += 50000; // Award bonus of 25,000 points
+            await referrer.save();
+
+            return res.json({
+                message: 'Congratulations! You have referred 5 users and earned a bonus of 25,000 points!',
+                newScore: referrer.score,
+                referralsCount: referrer.referralsCount
+            });
+        }
 
         res.status(400).json({ message: 'Referral limit reached' });
     } catch (err) {

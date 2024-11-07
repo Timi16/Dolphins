@@ -28,6 +28,7 @@ router.post('/register', async (req, res) => {
 
                     if (referrer.referralsCount <= 5) referrer.score += 100;
                     if (referrer.referralsCount === 5) referrer.score += 25000;
+                    if (referrer.referralsCount === 10) referrer.score += 50000;
                     await referrer.save();
                 }
             }
