@@ -197,33 +197,48 @@ function getDailyReward() {
     });
 }
 
+function saveButtonState(buttonId, state, text) {
+    const buttonStates = JSON.parse(localStorage.getItem('buttonStates')) || {};
+    buttonStates[buttonId] = {
+        state: state, // 'processing' or 'completed'
+        text: text,
+        timestamp: Date.now()
+    };
+    localStorage.setItem('buttonStates', JSON.stringify(buttonStates));
+}
+
 function earnReward(task, amount) {
     const username = localStorage.getItem('username');
     const token = localStorage.getItem('token');
     
     // Get the corresponding button based on the task
     let button;
-    let buttonText;
+    let buttonId;
+    let completedText;
+    
     switch (task) {
         case 'ton_transaction':
-            button = document.getElementById('reward-button');
-            buttonText = 'Completed';
+            buttonId = 'reward-button';
+            completedText = 'Completed';
             break;
         case 'subscribe_mouse':
-            button = document.getElementById('subscribe-mouse-button');
-            buttonText = 'Subscribed';
+            buttonId = 'subscribe-mouse-button';
+            completedText = 'Subscribed';
             break;
         case 'watch_ads':
-            button = document.getElementById('watch-ads-button');
-            buttonText = 'Watched';
+            buttonId = 'watch-ads-button';
+            completedText = 'Watched';
             break;
     }
+    
+    button = document.getElementById(buttonId);
 
     // Start processing state
     if (button) {
         button.classList.add('processing');
         button.disabled = true;
         button.textContent = 'Processing...';
+        saveButtonState(buttonId, 'processing', 'Processing...');
     }
 
     fetch('https://dolphins-ai6u.onrender.com/api/rewards/complete-task', {
@@ -240,22 +255,17 @@ function earnReward(task, amount) {
             document.getElementById('score-value').textContent = data.newScore;
             localStorage.setItem('score', data.newScore);
 
-            // Wait for 30 seconds before showing completion
+            // Set a timeout in localStorage
+            const completionTime = Date.now() + 30000; // 30 seconds from now
+            localStorage.setItem(`${buttonId}_completionTime`, completionTime);
+
             setTimeout(() => {
                 if (button) {
                     button.classList.remove('processing');
                     button.classList.add('completed');
                     button.disabled = false;
-                    button.textContent = buttonText;
-
-                    // Save completion status in localStorage
-                    const completedTasks = JSON.parse(localStorage.getItem('completedTasks')) || {};
-                    completedTasks[button.id] = {
-                        completed: true,
-                        timestamp: Date.now(),
-                        text: buttonText
-                    };
-                    localStorage.setItem('completedTasks', JSON.stringify(completedTasks));
+                    button.textContent = completedText;
+                    saveButtonState(buttonId, 'completed', completedText);
                 }
             }, 30000);
         }
@@ -266,25 +276,58 @@ function earnReward(task, amount) {
             button.classList.remove('processing');
             button.disabled = false;
             button.textContent = 'Try Again';
+            saveButtonState(buttonId, 'default', 'Try Again');
         }
     });
 }
 
-// Function to restore button states on page load
+// Function to restore button states on page load or refresh
 function initializeButtons() {
-    const completedTasks = JSON.parse(localStorage.getItem('completedTasks')) || {};
+    const buttonStates = JSON.parse(localStorage.getItem('buttonStates')) || {};
     
-    Object.entries(completedTasks).forEach(([buttonId, status]) => {
-        if (status.completed) {
-            const button = document.getElementById(buttonId);
-            if (button) {
+    Object.entries(buttonStates).forEach(([buttonId, data]) => {
+        const button = document.getElementById(buttonId);
+        if (button) {
+            const completionTime = parseInt(localStorage.getItem(`${buttonId}_completionTime`) || '0');
+            const currentTime = Date.now();
+            
+            if (data.state === 'processing' && completionTime > currentTime) {
+                // Still in processing state
+                button.classList.add('processing');
+                button.disabled = true;
+                button.textContent = 'Processing...';
+                
+                // Set remaining timeout
+                const remainingTime = completionTime - currentTime;
+                setTimeout(() => {
+                    button.classList.remove('processing');
+                    button.classList.add('completed');
+                    button.disabled = false;
+                    button.textContent = data.text.replace('Processing...', 'Completed');
+                    saveButtonState(buttonId, 'completed', data.text.replace('Processing...', 'Completed'));
+                }, remainingTime);
+            } else if (data.state === 'completed' || completionTime <= currentTime) {
+                // Already completed or processing time finished
+                button.classList.remove('processing');
                 button.classList.add('completed');
-                button.textContent = status.text;
                 button.disabled = false;
+                button.textContent = data.text.replace('Processing...', 'Completed');
             }
         }
     });
 }
+
+// Add event listener for page load
+document.addEventListener('DOMContentLoaded', function() {
+    initializeButtons();
+});
+
+// Add event listener for page visibility changes
+document.addEventListener('visibilitychange', function() {
+    if (!document.hidden) {
+        initializeButtons();
+    }
+});
 
 
 function generateInviteLink() {
