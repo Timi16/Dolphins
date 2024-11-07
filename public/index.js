@@ -332,3 +332,26 @@ function showNotification(message) {
         notification.remove();
     }, 5000);
 }
+
+
+function redirectAndEarn(link) {
+   
+    // Open the link in a new tab
+    const newWindow = window.open(link, '_blank');
+
+    // Check if the window was blocked by a popup blocker
+    if (newWindow) {
+        // Focus on the new tab and wait for confirmation from the user
+        newWindow.focus();
+        
+        // Ask for confirmation once the user has subscribed
+        const confirmSubscription = confirm("Did you subscribe to Dolphins Channel?");
+        if (confirmSubscription) {
+            // Call the reward function once confirmed
+            earnReward('subscribe_mouse', 150);
+        }
+    } else {
+        return
+    }
+}
+
