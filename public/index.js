@@ -169,29 +169,6 @@ function updateButtonState(buttonId, isCompleted, buttonText) {
     }
 }
 
-// Function to initialize buttons on page load
-function initializeButtons() {
-    const completedTasks = JSON.parse(localStorage.getItem('completedTasks')) || {};
-    
-    Object.entries(completedTasks).forEach(([buttonId, status]) => {
-        if (status.completed) {
-            const button = document.getElementById(buttonId);
-            if (button) {
-                button.classList.add('completed');
-                // Map button IDs to their completed text
-                const completedText = {
-                    'watch-ads-button': 'Watched',
-                    'daily-reward-button': 'Collected',
-                    'reward-button': 'Completed',
-                    'subscribe-mouse-button': 'Subscribed',
-                    'invite-friends-button': 'Sent'
-                };
-                button.textContent = completedText[buttonId] || 'Completed';
-            }
-        }
-    });
-}
-
 
 function getDailyReward() {
     const username = localStorage.getItem('username');
@@ -223,6 +200,32 @@ function getDailyReward() {
 function earnReward(task, amount) {
     const username = localStorage.getItem('username');
     const token = localStorage.getItem('token');
+    
+    // Get the corresponding button based on the task
+    let button;
+    let buttonText;
+    switch (task) {
+        case 'ton_transaction':
+            button = document.getElementById('reward-button');
+            buttonText = 'Completed';
+            break;
+        case 'subscribe_mouse':
+            button = document.getElementById('subscribe-mouse-button');
+            buttonText = 'Subscribed';
+            break;
+        case 'watch_ads':
+            button = document.getElementById('watch-ads-button');
+            buttonText = 'Watched';
+            break;
+    }
+
+    // Start processing state
+    if (button) {
+        button.classList.add('processing');
+        button.disabled = true;
+        button.textContent = 'Processing...';
+    }
+
     fetch('https://dolphins-ai6u.onrender.com/api/rewards/complete-task', {
         method: 'POST',
         headers: {
@@ -237,22 +240,52 @@ function earnReward(task, amount) {
             document.getElementById('score-value').textContent = data.newScore;
             localStorage.setItem('score', data.newScore);
 
-            // Mark the task as completed
-            if (task === 'ton_transaction') {
-                markAsCompleted(document.getElementById('reward-button'), 'Completed');
-                saveCompletionStatus('tonTransaction');
-            } else if (task === 'subscribe_mouse') {
-                markAsCompleted(document.getElementById('subscribe-mouse-button'), 'Subscribed');
-                saveCompletionStatus('subscribeMouse');
-            }
-        } else {
-            return
+            // Wait for 30 seconds before showing completion
+            setTimeout(() => {
+                if (button) {
+                    button.classList.remove('processing');
+                    button.classList.add('completed');
+                    button.disabled = false;
+                    button.textContent = buttonText;
+
+                    // Save completion status in localStorage
+                    const completedTasks = JSON.parse(localStorage.getItem('completedTasks')) || {};
+                    completedTasks[button.id] = {
+                        completed: true,
+                        timestamp: Date.now(),
+                        text: buttonText
+                    };
+                    localStorage.setItem('completedTasks', JSON.stringify(completedTasks));
+                }
+            }, 30000);
         }
     })
     .catch(error => {
         console.error('Error completing task:', error);
+        if (button) {
+            button.classList.remove('processing');
+            button.disabled = false;
+            button.textContent = 'Try Again';
+        }
     });
 }
+
+// Function to restore button states on page load
+function initializeButtons() {
+    const completedTasks = JSON.parse(localStorage.getItem('completedTasks')) || {};
+    
+    Object.entries(completedTasks).forEach(([buttonId, status]) => {
+        if (status.completed) {
+            const button = document.getElementById(buttonId);
+            if (button) {
+                button.classList.add('completed');
+                button.textContent = status.text;
+                button.disabled = false;
+            }
+        }
+    });
+}
+
 
 function generateInviteLink() {
     const user = checkUserLoggedIn();
