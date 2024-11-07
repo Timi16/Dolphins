@@ -81,6 +81,7 @@ body {
     }
 }
 
+/* Base button styles */
 .button {
     background: linear-gradient(45deg, #0066ff, #0052cc);
     color: #fff;
@@ -95,22 +96,78 @@ body {
     text-transform: uppercase;
     font-size: 14px;
     box-shadow: 0 2px 4px rgba(0, 102, 255, 0.2);
+    position: relative;
+    overflow: hidden;
 }
 
+/* Hover effect */
 .button:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 102, 255, 0.3);
-    background: linear-gradient(45deg, #0052cc, #0066ff);
 }
 
+/* Active state */
 .button:active {
     transform: translateY(0);
     box-shadow: 0 2px 4px rgba(0, 102, 255, 0.2);
 }
 
+/* Completion animation */
+@keyframes completeGlow {
+    0% {
+        box-shadow: 0 0 5px #4CAF50;
+    }
+    50% {
+        box-shadow: 0 0 20px #4CAF50;
+    }
+    100% {
+        box-shadow: 0 0 5px #4CAF50;
+    }
+}
+
+@keyframes fillGreen {
+    from {
+        background: linear-gradient(45deg, #0066ff, #0052cc);
+    }
+    to {
+        background: #4CAF50;
+    }
+}
+
+/* Processing state */
+.button.processing {
+    cursor: not-allowed;
+    animation: completeGlow 2s infinite;
+    background: linear-gradient(45deg, #0066ff, #0052cc);
+}
+
+/* Completed state */
 .button.completed {
-    background: linear-gradient(45deg, #4CAF50, #45a049);
+    background: #4CAF50;
     box-shadow: 0 2px 4px rgba(76, 175, 80, 0.2);
+    animation: fillGreen 0.5s ease forwards;
+}
+
+/* Shine effect for completed buttons */
+.button.completed::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: rgba(255, 255, 255, 0.2);
+    transform: rotate(45deg);
+    animation: shine 3s infinite;
+}
+
+@keyframes shine {
+    0% {
+        transform: rotate(45deg) translateX(-100%);
+    }
+    100% {
+        transform: rotate(45deg) translateX(100%);
+    }
 }
 
 .nav-bar {

@@ -127,19 +127,39 @@ function checkUserLoggedIn() {
 }
 
 
-function updateButtonStates(completedTasks) {
-    updateButtonState('watch-ads-button', completedTasks.watchAds, 'Watched');
-    updateButtonState('daily-reward-button', completedTasks.dailyReward, 'Collected');
-    updateButtonState('reward-button', completedTasks.tonTransaction, 'Completed');
-    updateButtonState('subscribe-mouse-button', completedTasks.subscribeMouse, 'Subscribed');
-    updateButtonState('invite-friends-button', completedTasks.inviteFriends, 'Sent');
+function markAsCompleted(button, buttonText) {
+    // First add processing state
+    button.classList.add('processing');
+    button.disabled = true;
+    
+    // Wait for 30 seconds before showing completion
+    setTimeout(() => {
+        button.classList.remove('processing');
+        button.classList.add('completed');
+        button.textContent = buttonText;
+        button.disabled = false;
+        
+        // Save the completion status
+        const taskId = button.id;
+        const completedTasks = JSON.parse(localStorage.getItem('completedTasks')) || {};
+        completedTasks[taskId] = {
+            completed: true,
+            timestamp: Date.now()
+        };
+        localStorage.setItem('completedTasks', JSON.stringify(completedTasks));
+    }, 30000); // 30 seconds
 }
 
 function updateButtonState(buttonId, isCompleted, buttonText) {
     const button = document.getElementById(buttonId);
     if (button) {
-        if (isCompleted) {
-            markAsCompleted(button, buttonText);
+        // Check localStorage for saved completion status
+        const completedTasks = JSON.parse(localStorage.getItem('completedTasks')) || {};
+        const taskStatus = completedTasks[buttonId];
+        
+        if (isCompleted || (taskStatus && taskStatus.completed)) {
+            button.classList.add('completed');
+            button.textContent = buttonText;
         } else {
             button.classList.remove('completed');
             button.textContent = 'Complete Task';
@@ -149,9 +169,27 @@ function updateButtonState(buttonId, isCompleted, buttonText) {
     }
 }
 
-function markAsCompleted(button, buttonText) {
-    button.classList.add('completed');
-    button.textContent = buttonText;
+// Function to initialize buttons on page load
+function initializeButtons() {
+    const completedTasks = JSON.parse(localStorage.getItem('completedTasks')) || {};
+    
+    Object.entries(completedTasks).forEach(([buttonId, status]) => {
+        if (status.completed) {
+            const button = document.getElementById(buttonId);
+            if (button) {
+                button.classList.add('completed');
+                // Map button IDs to their completed text
+                const completedText = {
+                    'watch-ads-button': 'Watched',
+                    'daily-reward-button': 'Collected',
+                    'reward-button': 'Completed',
+                    'subscribe-mouse-button': 'Subscribed',
+                    'invite-friends-button': 'Sent'
+                };
+                button.textContent = completedText[buttonId] || 'Completed';
+            }
+        }
+    });
 }
 
 
