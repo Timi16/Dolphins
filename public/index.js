@@ -342,18 +342,8 @@ function redirectAndEarn(link, task, amount) {
     if (newWindow) {
         // Focus on the new tab and wait for confirmation from the user
         newWindow.focus();
+        earnReward(task, amount);
         
-        // Ask for confirmation once the user has followed or subscribed
-        const confirmationMessage = task === 'subscribe_mouse' ? 
-            "Did you subscribe to Dolphins Channel?" : 
-            "Did you follow our X page?";
-        
-        const confirmAction = confirm(confirmationMessage);
-        if (confirmAction) {
-            // Call the reward function once confirmed
-            earnReward(task, amount);
-        }
-    } else {
-        alert("Please allow popups for this site to proceed.");
     }
+
 }
