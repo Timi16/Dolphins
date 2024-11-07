@@ -334,24 +334,26 @@ function showNotification(message) {
 }
 
 
-function redirectAndEarn(link) {
-   
+function redirectAndEarn(link, task, amount) {
     // Open the link in a new tab
-    const newWindow = window.open(link, '_blank');
+    const newWindow = window.open(`https://${link}`, '_blank');
 
     // Check if the window was blocked by a popup blocker
     if (newWindow) {
         // Focus on the new tab and wait for confirmation from the user
         newWindow.focus();
         
-        // Ask for confirmation once the user has subscribed
-        const confirmSubscription = confirm("Did you subscribe to Dolphins Channel?");
-        if (confirmSubscription) {
+        // Ask for confirmation once the user has followed or subscribed
+        const confirmationMessage = task === 'subscribe_mouse' ? 
+            "Did you subscribe to Dolphins Channel?" : 
+            "Did you follow our X page?";
+        
+        const confirmAction = confirm(confirmationMessage);
+        if (confirmAction) {
             // Call the reward function once confirmed
-            earnReward('subscribe_mouse', 150);
+            earnReward(task, amount);
         }
     } else {
-        return
+        alert("Please allow popups for this site to proceed.");
     }
 }
-
