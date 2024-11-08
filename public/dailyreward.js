@@ -8,8 +8,6 @@ const dailyRewards = [500, 1500, 2500, 3500, 5000, 7000, 8000, 9000, 10000];
 // Function to claim the daily reward through the API
 async function claimDailyReward(day) {
   try {
-    // Show an ad before claiming the reward (optional)
-    showAd();
     const token = localStorage.getItem('token');
     // Make a POST request to the /daily-reward endpoint
     const response = await fetch('https://dolphins-ai6u.onrender.com/api/rewards/daily-reward', {
