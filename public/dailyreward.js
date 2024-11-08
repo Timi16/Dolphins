@@ -1,62 +1,56 @@
 // Get the initial SOWLS score, current day, and last claim time from local storage or set defaults
 let sowls = parseInt(localStorage.getItem('sowls')) || 0;
 let currentDay = parseInt(localStorage.getItem('currentDay')) || 1;
-let lastClaimTime = parseInt(localStorage.getItem('lastClaimTime')) || Date.now();
 
-// Define a 24-hour period in milliseconds
-const ONE_DAY_MS = 24 * 60 * 60 * 1000;
-
-// Array of daily rewards
+// Array of daily rewards (for UI purposes only)
 const dailyRewards = [500, 1500, 2500, 3500, 5000, 7000, 8000, 9000, 10000];
 
-// Function to display an ad
-function showAd() {
-  alert("Ad: Watch this ad to claim your reward!");
-  // Here, insert the ad integration code if using an ad SDK
-}
+// Function to claim the daily reward through the API
+async function claimDailyReward(day) {
+  try {
+    // Show an ad before claiming the reward (optional)
+    showAd();
+    const token = localStorage.getItem('token');
+    // Make a POST request to the /daily-reward endpoint
+    const response = await fetch('https://dolphins-ai6u.onrender.com/api/rewards/daily-reward', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': token // Assuming the token is stored in localStorage
+      },
+      body: JSON.stringify({ username: localStorage.getItem('username') })
+    });
 
-// Function to claim the daily reward
-function claimDailyReward(day) {
-  const currentTime = Date.now();
+    const data = await response.json();
 
-  // Check if the user has already claimed the reward for the day
-  if (localStorage.getItem(`day${day}Claimed`) === 'true') {
-    alert(`You've already claimed the reward for Day ${day}.`);
-    return;
+    // Check if the reward was successfully claimed
+    if (response.ok) {
+      // Update the sowls score and display it in the UI
+      sowls = data.newScore;
+      document.querySelector('.score').textContent = `${sowls.toLocaleString()} Dolphins`;
+
+      // Update the current day and save it to localStorage
+      currentDay = data.nextDay;
+      localStorage.setItem('currentDay', currentDay);
+
+      // Mark the day as claimed in local storage
+      localStorage.setItem(`day${day}Claimed`, 'true');
+
+      // Update the UI to reflect the claimed reward
+      updateUI();
+    } else {
+      alert(data.message || 'Error claiming daily reward.');
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    alert('Failed to claim daily reward. Please try again later.');
   }
-
-  // Check if 24 hours have passed since the last claim
-  if (currentTime - lastClaimTime < ONE_DAY_MS && day > 1) {
-    alert("You need to wait 24 hours to claim the next day's reward.");
-    return;
-  }
-
-  // Show an ad when claiming the reward
-  showAd();
-
-  // Add the reward to the SOWLS score
-  sowls += dailyRewards[day - 1];
-  localStorage.setItem('sowls', sowls);
-  document.querySelector('.score').textContent = `${sowls.toLocaleString()} SOWLS`;
-
-  // Mark the day as claimed and update the last claim time
-  localStorage.setItem(`day${day}Claimed`, 'true');
-  lastClaimTime = currentTime;
-  localStorage.setItem('lastClaimTime', lastClaimTime);
-
-  // Move to the next day or reset to Day 1 if at the end of the rewards
-  currentDay = day < dailyRewards.length ? day + 1 : 1;
-  localStorage.setItem('currentDay', currentDay);
-
-  // Update the UI immediately
-  updateUI();
 }
 
 // Function to update the UI based on the current day
 function updateUI() {
   const currentTime = Date.now();
 
-  // Iterate over each card
   document.querySelectorAll('.card').forEach((card, index) => {
     const day = index + 1;
     const isClaimed = localStorage.getItem(`day${day}Claimed`) === 'true';
@@ -66,16 +60,10 @@ function updateUI() {
     if (isClaimed) {
       claimButton.disabled = true;
       claimButton.textContent = 'Claimed';
-      claimButton.classList.add('claimed'); // Add green color when claimed
+      claimButton.classList.add('claimed');
     } else if (day === currentDay) {
-      // Enable the claim button if 24 hours have passed or if it's the first claim
-      if (currentTime - lastClaimTime >= ONE_DAY_MS || currentDay === 1) {
-        claimButton.disabled = false;
-        claimButton.textContent = 'Claim';
-      } else {
-        claimButton.disabled = true;
-        claimButton.textContent = 'Unavailable';
-      }
+      claimButton.disabled = false;
+      claimButton.textContent = 'Claim';
     } else {
       claimButton.disabled = true;
       claimButton.textContent = 'Unavailable';
@@ -83,12 +71,10 @@ function updateUI() {
   });
 }
 
-// Add click event listeners to the "Claim" buttons
+// Add click event listeners to "Claim" buttons
 document.querySelectorAll('.button').forEach((button, index) => {
   button.addEventListener('click', () => claimDailyReward(index + 1));
 });
 
 // Initialize the UI
 updateUI();
-
-

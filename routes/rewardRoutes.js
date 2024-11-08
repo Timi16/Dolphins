@@ -70,10 +70,12 @@ router.post('/complete-task',authenticateJWT, async (req, res) => {
 });
 
 // Get daily reward
-router.post('/daily-reward',authenticateJWT, async (req, res) => {
-    const { username } = req.body;
-    const dailyRewardAmount = 500;
+// Define the reward points array
+const dailyRewards = [500, 1500, 2500, 3500, 5000, 7000, 8000, 9000, 10000];
 
+// Modify /daily-reward endpoint
+router.post('/daily-reward', authenticateJWT, async (req, res) => {
+    const { username } = req.body;
     try {
         const user = await User.findOne({ username });
         if (!user) return res.status(404).json({ message: 'User not found' });
@@ -81,21 +83,33 @@ router.post('/daily-reward',authenticateJWT, async (req, res) => {
         const today = new Date().setHours(0, 0, 0, 0); // Reset to midnight
         const lastRewardDate = user.lastDailyRewardDate ? user.lastDailyRewardDate.setHours(0, 0, 0, 0) : null;
 
+        // Check if the daily reward was already collected today
         if (lastRewardDate === today) {
             return res.status(400).json({ message: 'Daily reward already collected' });
         }
 
+        // Determine the reward amount based on the user's current day in the reward sequence
+        const currentDay = user.currentDay || 1; // Default to day 1 if not set
+        const dailyRewardAmount = dailyRewards[(currentDay - 1) % dailyRewards.length];
+
+        // Update user's score and set new reward information
         user.score += dailyRewardAmount;
-        user.lastDailyRewardDate = new Date(); // Store current date
-        user.dailyRewardCollected = true;
+        user.lastDailyRewardDate = new Date(); // Update with today's date
+        user.currentDay = currentDay < dailyRewards.length ? currentDay + 1 : 1; // Reset to day 1 if at end of array
         await user.save();
 
-        return res.json({ message: `You have collected ${dailyRewardAmount} DOGS`, newScore: user.score });
+        // Respond with the updated score and reward details
+        return res.json({
+            message: `You have collected ${dailyRewardAmount} points for Day ${currentDay}`,
+            newScore: user.score,
+            nextDay: user.currentDay
+        });
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Server error' });
     }
 });
+
 
 // Generate invite link
 router.get('/generate-invite/:username',authenticateJWT, async (req, res) => {
