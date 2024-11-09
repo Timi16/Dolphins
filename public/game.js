@@ -5,7 +5,17 @@ let timeRemaining = 30;
 let lastTime = performance.now();
 let isTimeFrozen = false;
 let activeElements = 0;
-const maxElements = 12;
+const maxElements = 15;
+
+// Grid configuration for organized spawning
+const grid = {
+  columns: 5,
+  rows: 3,
+  spacing: {
+    x: window.innerWidth / 6,
+    y: window.innerHeight / 4
+  }
+};
 
 const gameContainer = document.getElementById('game-container');
 const scoreElement = document.getElementById('score');
@@ -16,115 +26,146 @@ const finalScoreSpan = document.getElementById('final-score');
 const playAgainBtn = document.getElementById('play-again');
 const exitGameBtn = document.getElementById('exit-game');
 
-function getSpawnRate() {
-  const width = window.innerWidth;
-  if (width < 768) return 1000;
-  if (width < 1024) return 800;
-  return 600;
-}
-
-function getRandomVelocity() {
-  const width = window.innerWidth;
-  const speedMultiplier = width < 768 ? 1 : 2;
+// Get grid position for spawning
+function getGridPosition(index) {
+  const column = index % grid.columns;
+  const row = Math.floor(index / grid.columns);
   
   return {
-    x: (Math.random() - 0.5) * speedMultiplier,
-    y: Math.random() * speedMultiplier + 1
+    x: (column + 1) * grid.spacing.x - 25,
+    y: (row + 1) * grid.spacing.y
   };
 }
 
-function createGameElement(type) {
+function getRandomVelocity() {
+  const baseSpeed = 1.5;
+  return {
+    x: (Math.random() - 0.5) * baseSpeed,
+    y: Math.random() * baseSpeed + 1
+  };
+}
+
+function createGameElement(type, index) {
   if (isGameOver || isPaused || activeElements >= maxElements) return;
 
   const element = document.createElement('div');
   element.className = 'game-element';
   
-  // Set element type and appearance
   if (type === 'dolphin') {
     element.innerHTML = '🐬';
     element.classList.add('dolphin');
+    element.dataset.points = '2';
   } else if (type === 'bomb') {
     element.innerHTML = '💣';
     element.classList.add('bomb');
+    element.dataset.points = '-3';
   } else if (type === 'special') {
     element.innerHTML = '⭐';
     element.classList.add('special');
+    element.dataset.points = '5';
   }
 
-  // Spawn elements along the top
-  const rect = gameContainer.getBoundingClientRect();
-  const leftPosition = Math.random() * (rect.width - 40);
-  
-  element.style.left = `${leftPosition}px`;
-  element.style.top = '0px';
+  // Use grid position for initial placement
+  const position = getGridPosition(index);
+  element.style.left = `${position.x}px`;
+  element.style.top = `${position.y}px`;
 
   element.velocity = getRandomVelocity();
 
   element.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!isGameOver && !isPaused && !isTimeFrozen) {
-      if (type === 'dolphin') {
-        score += 2;
-        element.classList.add('caught');
-        playSound('dolphin');
-      } else if (type === 'bomb') {
-        score = Math.max(0, score - 3);
-        element.classList.add('exploded');
-        playSound('bomb');
-      } else if (type === 'special') {
+    
+    if (!isGameOver && !isPaused) {
+      if (type === 'special') {
         activateFreeze();
-        score += 5;
+        score += parseInt(element.dataset.points);
         playSound('special');
+        element.remove();
+      } else if (isTimeFrozen) {
+        // During freeze time, make elements more valuable
+        const points = parseInt(element.dataset.points);
+        score += points * 2; // Double points during freeze
+        element.classList.add(type === 'dolphin' ? 'caught' : 'exploded');
+        playSound(type);
+        setTimeout(() => element.remove(), 200);
       }
+      
       scoreElement.textContent = `Score: ${score}`;
       activeElements--;
-      setTimeout(() => element.remove(), 200);
     }
   });
 
   activeElements++;
   gameContainer.appendChild(element);
+  return element;
+}
+
+function spawnWave() {
+  const totalSpots = grid.columns * grid.rows;
+  const elements = [];
+  
+  // Create a shuffled array of positions
+  const positions = Array.from({length: totalSpots}, (_, i) => i);
+  positions.sort(() => Math.random() - 0.5);
+  
+  // Spawn elements in random positions
+  let index = 0;
+  
+  // Spawn 1 special star
+  elements.push(createGameElement('special', positions[index++]));
+  
+  // Spawn dolphins (60% of remaining spots)
+  const dolphinCount = Math.floor((positions.length - 1) * 0.6);
+  for (let i = 0; i < dolphinCount && index < positions.length; i++) {
+    elements.push(createGameElement('dolphin', positions[index++]));
+  }
+  
+  // Fill remaining spots with bombs
+  while (index < positions.length) {
+    elements.push(createGameElement('bomb', positions[index++]));
+  }
+  
+  return elements;
 }
 
 function activateFreeze() {
   isTimeFrozen = true;
   gameContainer.classList.add('frozen');
   
-  const elements = document.querySelectorAll('.game-element');
-  elements.forEach(el => {
-    el.dataset.savedVelocityX = el.velocity.x;
-    el.dataset.savedVelocityY = el.velocity.y;
+  // Add glowing effect to all clickable elements
+  document.querySelectorAll('.game-element').forEach(el => {
+    el.classList.add('clickable');
     el.velocity = { x: 0, y: 0 };
   });
 
-  setTimeout(() => {
-    isTimeFrozen = false;
-    gameContainer.classList.remove('frozen');
-    document.querySelectorAll('.game-element').forEach(el => {
-      el.velocity = {
-        x: parseFloat(el.dataset.savedVelocityX) || 0,
-        y: parseFloat(el.dataset.savedVelocityY) || 0
-      };
-      delete el.dataset.savedVelocityX;
-      delete el.dataset.savedVelocityY;
-    });
-  }, 3000);
+  // Show countdown timer
+  const freezeTimer = document.createElement('div');
+  freezeTimer.className = 'freeze-timer';
+  gameContainer.appendChild(freezeTimer);
+  
+  let freezeTime = 5;
+  
+  const countDown = setInterval(() => {
+    freezeTime--;
+    freezeTimer.textContent = freezeTime;
+    
+    if (freezeTime <= 0) {
+      clearInterval(countDown);
+      endFreeze();
+      freezeTimer.remove();
+    }
+  }, 1000);
 }
 
-function playSound(type) {
-  // Create audio elements for game sounds
-  const sounds = {
-    dolphin: new Audio('path/to/dolphin-sound.mp3'),
-    bomb: new Audio('path/to/explosion-sound.mp3'),
-    special: new Audio('path/to/powerup-sound.mp3')
-  };
+function endFreeze() {
+  isTimeFrozen = false;
+  gameContainer.classList.remove('frozen');
   
-  const sound = sounds[type];
-  if (sound) {
-    sound.volume = 0.3;
-    sound.play().catch(() => {}); // Catch and ignore autoplay restrictions
-}
+  document.querySelectorAll('.game-element').forEach(el => {
+    el.classList.remove('clickable');
+    el.velocity = getRandomVelocity();
+  });
 }
 
 function updateElementPositions() {
@@ -156,20 +197,27 @@ function updateElementPositions() {
   });
 }
 
+// Sound effects
+function playSound(type) {
+  const sounds = {
+    dolphin: new Audio('path/to/dolphin-sound.mp3'),
+    bomb: new Audio('path/to/explosion-sound.mp3'),
+    special: new Audio('path/to/powerup-sound.mp3')
+  };
+  
+  const sound = sounds[type];
+  if (sound) {
+    sound.volume = 0.3;
+    sound.play().catch(() => {});
+  }
+}
+
 function gameLoop(currentTime) {
   if (!isGameOver && !isPaused) {
     const deltaTime = currentTime - lastTime;
     
-    if (deltaTime >= getSpawnRate()) {
-      // 70% chance for dolphin, 20% for bomb, 10% for special
-      const rand = Math.random();
-      if (rand < 0.7) {
-        createGameElement('dolphin');
-      } else if (rand < 0.9) {
-        createGameElement('bomb');
-      } else {
-        createGameElement('special');
-      }
+    if (deltaTime >= 5000 && document.querySelectorAll('.game-element').length === 0) {
+      spawnWave();
       lastTime = currentTime;
     }
     
@@ -177,6 +225,30 @@ function gameLoop(currentTime) {
     requestAnimationFrame(gameLoop);
   }
 }
+
+// Rest of the functions remain the same...
+// (updateTimer, endGame, resetGame, togglePause, saveGameScore)
+
+// Initialize game
+window.addEventListener('resize', () => {
+  grid.spacing = {
+    x: window.innerWidth / 6,
+    y: window.innerHeight / 4
+  };
+});
+
+
+
+// Start game loop and timer
+requestAnimationFrame(gameLoop);
+setInterval(updateTimer, 1000);
+
+// Event listeners
+playAgainBtn.addEventListener('click', resetGame);
+pauseBtn.addEventListener('click', togglePause);
+exitGameBtn.addEventListener('click', () => {
+  window.location.href = 'home.html';
+});
 
 function clearElements() {
   const elements = document.querySelectorAll('.game-element');
@@ -241,17 +313,6 @@ const token = localStorage.getItem('token');
 if (!username || !token) {
     window.location.href = 'home.html';
 }
-
-// Start game loop and timer
-requestAnimationFrame(gameLoop);
-setInterval(updateTimer, 1000);
-
-// Event listeners
-playAgainBtn.addEventListener('click', resetGame);
-pauseBtn.addEventListener('click', togglePause);
-exitGameBtn.addEventListener('click', () => {
-  window.location.href = 'home.html';
-});
 
 async function saveGameScore(gameScore) {
   const token = localStorage.getItem('token');
