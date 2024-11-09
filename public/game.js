@@ -1,310 +1,258 @@
-let score = 0;
-let isGameOver = false;
-let isPaused = false;
-let timeRemaining = 30;
-let lastTime = performance.now();
-let isTimeFrozen = false;
-let activeElements = 0;
-const maxElements = 15;
-
-// Grid configuration for organized spawning
-const grid = {
-  columns: 5,
-  rows: 3,
-  spacing: {
-    x: window.innerWidth / 6,
-    y: window.innerHeight / 4
-  }
+// Game state management
+const gameState = {
+  score: 0,
+  timeRemaining: 30,
+  isGameOver: false,
+  isPaused: false,
+  isTimeFrozen: false,
+  lastFrameTime: 0,
+  deltaTime: 0,
+  spawnTimer: 0,
+  freezeTimer: 0,
+  entities: new Set(),
+  maxEntities: 15
 };
 
-const gameContainer = document.getElementById('game-container');
-const scoreElement = document.getElementById('score');
-const timerElement = document.getElementById('timer');
-const pauseBtn = document.getElementById('pause-btn');
-const menuOverlay = document.querySelector('.menu-overlay');
-const finalScoreSpan = document.getElementById('final-score');
-const playAgainBtn = document.getElementById('play-again');
-const exitGameBtn = document.getElementById('exit-game');
+// Cached DOM elements
+const dom = {
+  container: document.getElementById('game-container'),
+  score: document.getElementById('score'),
+  timer: document.getElementById('timer'),
+  pauseBtn: document.getElementById('pause-btn'),
+  menuOverlay: document.querySelector('.menu-overlay'),
+  finalScore: document.getElementById('final-score'),
+  playAgainBtn: document.getElementById('play-again'),
+  exitGameBtn: document.getElementById('exit-game')
+};
 
-// Get grid position for spawning
-function getGridPosition(index) {
-  const column = index % grid.columns;
-  const row = Math.floor(index / grid.columns);
-  
-  return {
-    x: (column + 1) * grid.spacing.x - 25,
-    y: (row + 1) * grid.spacing.y
-  };
-}
-
-function getRandomVelocity() {
-  const baseSpeed = 0.3; // Lower speed for smoother movement
-  return {
-      x: (Math.random() - 0.5) * baseSpeed,
-      y: Math.random() * baseSpeed + 0.3
-  };
-}
-
-
-function createGameElement(type, index) {
-  if (isGameOver || isPaused || activeElements >= maxElements) return;
-
-  const element = document.createElement('div');
-  element.className = 'game-element';
-  
-  if (type === 'dolphin') {
-    element.innerHTML = '🐬';
-    element.classList.add('dolphin');
-    element.dataset.points = '2';
-  } else if (type === 'bomb') {
-    element.innerHTML = '💣';
-    element.classList.add('bomb');
-    element.dataset.points = '-3';
-  } else if (type === 'special') {
-    element.innerHTML = '⭐';
-    element.classList.add('special');
-    element.dataset.points = '5';
+// Entity class for game objects
+class Entity {
+  constructor(type, x, y) {
+    this.type = type;
+    this.x = x;
+    this.y = y;
+    this.vx = 0;
+    this.vy = 0;
+    this.width = 48;  // Base size for entities
+    this.height = 48;
+    this.element = null;
+    this.points = this.getPoints();
+    this.createDOMElement();
   }
 
-  // Use grid position for initial placement
-  const position = getGridPosition(index);
-  element.style.left = `${position.x}px`;
-  element.style.top = `${position.y}px`;
-
-  element.velocity = getRandomVelocity();
-
-  element.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (!isGameOver && !isPaused) {
-      if (type === 'special') {
-        activateFreeze();
-        score += parseInt(element.dataset.points);
-        playSound('special');
-        element.remove();
-      } else if (isTimeFrozen) {
-        // During freeze time, make elements more valuable
-        const points = parseInt(element.dataset.points);
-        score += points * 2; // Double points during freeze
-        element.classList.add(type === 'dolphin' ? 'caught' : 'exploded');
-        playSound(type);
-        setTimeout(() => element.remove(), 200);
-      }
-      
-      scoreElement.textContent = `Score: ${score}`;
-      activeElements--;
+  getPoints() {
+    switch(this.type) {
+      case 'dolphin': return 2;
+      case 'bomb': return -3;
+      case 'special': return 5;
+      default: return 0;
     }
-  });
+  }
 
-  activeElements++;
-  gameContainer.appendChild(element);
-  return element;
-}
+  createDOMElement() {
+    this.element = document.createElement('div');
+    this.element.className = `game-element ${this.type}`;
+    this.element.innerHTML = this.getEmoji();
+    this.updatePosition();
+    dom.container.appendChild(this.element);
+  }
 
-function spawnWave() {
-  const totalSpots = grid.columns * grid.rows;
-  const availableSpots = Math.min(totalSpots, maxElements - activeElements);
+  getEmoji() {
+    switch(this.type) {
+      case 'dolphin': return '🐬';
+      case 'bomb': return '💣';
+      case 'special': return '⭐';
+      default: return '';
+    }
+  }
 
-  const positions = Array.from({ length: availableSpots }, (_, i) => i);
-  positions.sort(() => Math.random() - 0.5);
+  updatePosition() {
+    if (!this.element) return;
+    this.element.style.transform = `translate(${this.x}px, ${this.y}px)`;
+  }
 
-  let index = 0;
-  if (availableSpots > 0) {
-      createGameElement('special', positions[index++]);  // 1 special element
+  setVelocity() {
+    const baseSpeed = gameState.isTimeFrozen ? 0 : 200; // pixels per second
+    this.vx = (Math.random() - 0.5) * baseSpeed;
+    this.vy = Math.random() * baseSpeed + 100;
+  }
 
-      // Remaining elements as dolphins and bombs
-      const dolphinCount = Math.floor((availableSpots - 1) * 0.6);
-      for (let i = 0; i < dolphinCount && index < availableSpots; i++) {
-          createGameElement('dolphin', positions[index++]);
-      }
-      while (index < availableSpots) {
-          createGameElement('bomb', positions[index++]);
-      }
+  update(deltaTime) {
+    if (gameState.isTimeFrozen) return;
+    
+    const secondsFraction = deltaTime / 1000;
+    this.x += this.vx * secondsFraction;
+    this.y += this.vy * secondsFraction;
+
+    // Boundary checking
+    const bounds = dom.container.getBoundingClientRect();
+    if (this.x <= 0 || this.x + this.width >= bounds.width) {
+      this.vx *= -1;
+      this.x = this.x <= 0 ? 0 : bounds.width - this.width;
+    }
+
+    if (this.y > bounds.height) {
+      this.destroy();
+      return false;
+    }
+
+    this.updatePosition();
+    return true;
+  }
+
+  destroy() {
+    if (this.element && this.element.parentNode) {
+      this.element.remove();
+    }
+    gameState.entities.delete(this);
+  }
+
+  onClick() {
+    if (gameState.isGameOver || gameState.isPaused) return;
+
+    if (this.type === 'special') {
+      activateFreeze();
+      gameState.score += this.points;
+      this.destroy();
+    } else if (gameState.isTimeFrozen) {
+      gameState.score += this.points * 2;
+      this.element.classList.add(this.type === 'dolphin' ? 'caught' : 'exploded');
+      setTimeout(() => this.destroy(), 200);
+    }
+
+    dom.score.textContent = `Score: ${gameState.score}`;
   }
 }
 
+// Spawn system
+class SpawnSystem {
+  static getSpawnPosition() {
+    const bounds = dom.container.getBoundingClientRect();
+    const margin = 50;
+    return {
+      x: margin + Math.random() * (bounds.width - 2 * margin),
+      y: -50 // Start above the visible area
+    };
+  }
+
+  static spawnWave() {
+    if (gameState.entities.size >= gameState.maxEntities) return;
+
+    const types = ['special', 'dolphin', 'dolphin', 'dolphin', 'bomb'];
+    const spawnCount = Math.min(5, gameState.maxEntities - gameState.entities.size);
+
+    for (let i = 0; i < spawnCount; i++) {
+      const type = types[Math.floor(Math.random() * types.length)];
+      const { x, y } = this.getSpawnPosition();
+      const entity = new Entity(type, x, y);
+      entity.setVelocity();
+      entity.element.addEventListener('click', () => entity.onClick());
+      gameState.entities.add(entity);
+    }
+  }
+}
+
+// Game systems
 function activateFreeze() {
-  isTimeFrozen = true;
-  document.querySelectorAll('.game-element').forEach(el => {
-      el.classList.add('clickable');
-      el.velocity = { x: 0, y: 0 };
-  });
-
-  let freezeTime = 5;
-  const freezeTimer = setInterval(() => {
-      if (--freezeTime <= 0) {
-          clearInterval(freezeTimer);
-          endFreeze();
-      }
-  }, 1000);
+  gameState.isTimeFrozen = true;
+  dom.container.classList.add('frozen');
+  gameState.freezeTimer = 5000; // 5 seconds freeze
 }
 
+function updateFreeze(deltaTime) {
+  if (!gameState.isTimeFrozen) return;
 
-function endFreeze() {
-  isTimeFrozen = false;
-  gameContainer.classList.remove('frozen');
-  
-  document.querySelectorAll('.game-element').forEach(el => {
-    el.classList.remove('clickable');
-    el.velocity = getRandomVelocity();
-  });
-}
-
-function updateElementPositions() {
-  if (isPaused || isTimeFrozen) return;
-
-  const elements = document.querySelectorAll('.game-element');
-  const rect = gameContainer.getBoundingClientRect();
-
-  elements.forEach(element => {
-      const elementRect = element.getBoundingClientRect();
-      let x = parseFloat(element.style.left) || 0;
-      let y = parseFloat(element.style.top) || 0;
-
-      x += element.velocity.x;
-      y += element.velocity.y;
-
-      if (x <= 0 || x + elementRect.width >= rect.width) {
-          element.velocity.x *= -1;
-          x = x <= 0 ? 0 : rect.width - elementRect.width;
-      }
-
-      element.style.left = `${x}px`;
-      element.style.top = `${y}px`;
-
-      if (y > rect.height) {
-          activeElements--;
-          element.remove();
-      }
-  });
-}
- 
-
-// Sound effects
-function playSound(type) {
-  const sounds = {
-    dolphin: new Audio('path/to/dolphin-sound.mp3'),
-    bomb: new Audio('path/to/explosion-sound.mp3'),
-    special: new Audio('path/to/powerup-sound.mp3')
-  };
-  
-  const sound = sounds[type];
-  if (sound) {
-    sound.volume = 0.3;
-    sound.play().catch(() => {});
+  gameState.freezeTimer -= deltaTime;
+  if (gameState.freezeTimer <= 0) {
+    gameState.isTimeFrozen = false;
+    dom.container.classList.remove('frozen');
+    gameState.entities.forEach(entity => entity.setVelocity());
   }
-}
-
-function gameLoop(currentTime) {
-  if (!isGameOver && !isPaused) {
-      const deltaTime = currentTime - lastTime;
-
-      // Adjusting the spawn interval
-      if (deltaTime >= 7000 && document.querySelectorAll('.game-element').length === 0) {
-          spawnWave();
-          lastTime = currentTime;
-      }
-
-      updateElementPositions();
-      requestAnimationFrame(gameLoop);
-  }
-}
-
-
-// Rest of the functions remain the same...
-// (updateTimer, endGame, resetGame, togglePause, saveGameScore)
-
-// Initialize game
-window.addEventListener('resize', () => {
-  grid.spacing = {
-    x: window.innerWidth / 6,
-    y: window.innerHeight / 4
-  };
-});
-
-
-
-// Start game loop and timer
-requestAnimationFrame(gameLoop);
-setInterval(updateTimer, 1000);
-
-// Event listeners
-playAgainBtn.addEventListener('click', resetGame);
-pauseBtn.addEventListener('click', togglePause);
-exitGameBtn.addEventListener('click', () => {
-  window.location.href = 'home.html';
-});
-
-function clearElements() {
-  const elements = document.querySelectorAll('.game-element');
-  elements.forEach(element => element.remove());
-  activeElements = 0;
 }
 
 function updateTimer() {
-  if (isPaused) return;
+  if (gameState.isPaused || gameState.isGameOver) return;
   
-  if (timeRemaining > 0) {
-    timeRemaining--;
-    timerElement.textContent = `Time: ${timeRemaining}s`;
-    
-    if (timeRemaining <= 10) {
-      timerElement.classList.add('warning');
-    }
-    
-    if (timeRemaining === 0) {
-      endGame();
-    }
+  gameState.timeRemaining--;
+  dom.timer.textContent = `Time: ${gameState.timeRemaining}s`;
+  
+  if (gameState.timeRemaining <= 10) {
+    dom.timer.classList.add('warning');
+  }
+  
+  if (gameState.timeRemaining <= 0) {
+    endGame();
   }
 }
 
 function endGame() {
-  isGameOver = true;
-  clearElements();
-  finalScoreSpan.textContent = score;
-  menuOverlay.style.display = 'flex';
-  saveGameScore(score);
+  gameState.isGameOver = true;
+  gameState.entities.forEach(entity => entity.destroy());
+  gameState.entities.clear();
+  dom.finalScore.textContent = gameState.score;
+  dom.menuOverlay.style.display = 'flex';
+  saveGameScore(gameState.score);
 }
 
 function resetGame() {
-  clearElements(); // Clear all game elements
-  activeElements = 0;
-  score = 0;
-  isGameOver = false;
-  isPaused = false;
-  timeRemaining = 30;
+  gameState.entities.forEach(entity => entity.destroy());
+  gameState.entities.clear();
+  gameState.score = 0;
+  gameState.timeRemaining = 30;
+  gameState.isGameOver = false;
+  gameState.isPaused = false;
+  gameState.isTimeFrozen = false;
+  gameState.spawnTimer = 0;
+  
+  dom.score.textContent = 'Score: 0';
+  dom.timer.textContent = 'Time: 30s';
+  dom.timer.classList.remove('warning');
+  dom.menuOverlay.style.display = 'none';
+  
+  requestAnimationFrame(gameLoop);
+}
 
-  scoreElement.textContent = 'Score: 0';
-  timerElement.textContent = 'Time: 30s';
-  menuOverlay.style.display = 'none';
+// Main game loop using requestAnimationFrame
+function gameLoop(timestamp) {
+  if (gameState.isGameOver || gameState.isPaused) return;
+
+  // Calculate delta time
+  gameState.deltaTime = timestamp - gameState.lastFrameTime;
+  gameState.lastFrameTime = timestamp;
+
+  // Update spawn timer
+  gameState.spawnTimer += gameState.deltaTime;
+  if (gameState.spawnTimer >= 2000) { // Spawn every 2 seconds
+    SpawnSystem.spawnWave();
+    gameState.spawnTimer = 0;
+  }
+
+  // Update freeze status
+  updateFreeze(gameState.deltaTime);
+
+  // Update all entities
+  gameState.entities.forEach(entity => entity.update(gameState.deltaTime));
 
   requestAnimationFrame(gameLoop);
 }
 
-
+// Event handlers
 function togglePause() {
-  isPaused = !isPaused;
-  pauseBtn.classList.toggle('paused');
+  gameState.isPaused = !gameState.isPaused;
+  dom.pauseBtn.classList.toggle('paused');
   
-  if (!isPaused) {
-    lastTime = performance.now();
+  if (!gameState.isPaused) {
+    gameState.lastFrameTime = performance.now();
     requestAnimationFrame(gameLoop);
   }
 }
 
-// Initialize game
-const username = localStorage.getItem('username');
-const token = localStorage.getItem('token');
-if (!username || !token) {
-    window.location.href = 'home.html';
-}
-
 async function saveGameScore(gameScore) {
   const token = localStorage.getItem('token');
+  const username = localStorage.getItem('username');
   
-  if (!token) {
-    console.error('Authentication token not found');
+  if (!token || !username) {
+    console.error('Authentication data not found');
     return;
   }
 
@@ -315,22 +263,41 @@ async function saveGameScore(gameScore) {
         'Authorization': token,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        username,
-        gameScore
-      }),
+      body: JSON.stringify({ username, gameScore }),
     });
 
     const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.message || 'Server error');
-    }
-
+    if (!response.ok) throw new Error(data.message || 'Server error');
+    
     localStorage.setItem('score', data.newScore.toString());
     return data.newScore;
-
   } catch (error) {
     console.error('Error saving score:', error);
-    throw error;
   }
 }
+
+// Initialization
+function initGame() {
+  const username = localStorage.getItem('username');
+  const token = localStorage.getItem('token');
+  
+  if (!username || !token) {
+    window.location.href = 'home.html';
+    return;
+  }
+
+  // Event listeners
+  dom.playAgainBtn.addEventListener('click', resetGame);
+  dom.pauseBtn.addEventListener('click', togglePause);
+  dom.exitGameBtn.addEventListener('click', () => {
+    window.location.href = 'home.html';
+  });
+
+  // Start game systems
+  gameState.lastFrameTime = performance.now();
+  setInterval(updateTimer, 1000);
+  requestAnimationFrame(gameLoop);
+}
+
+// Start the game
+initGame();

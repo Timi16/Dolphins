@@ -29,17 +29,8 @@ body {
 
 .game-element {
   position: absolute;
-  cursor: pointer;
-  font-size: 3rem;
-  transform-origin: center;
-  pointer-events: auto;
-  -webkit-tap-highlight-color: transparent;
-  transition: transform 0.3s, filter 0.3s;
-  user-select: none;
-  z-index: 1;
-}
-.game-element {
-  transition: top 1s ease-in; /* Smooth descent */
+  will-change: transform;
+  transform: translate(0, 0);
 }
 
 .game-element:hover {
