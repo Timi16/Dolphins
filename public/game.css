@@ -38,6 +38,9 @@ body {
   user-select: none;
   z-index: 1;
 }
+.game-element {
+  transition: top 1s ease-in; /* Smooth descent */
+}
 
 .game-element:hover {
   transform: scale(1.2);

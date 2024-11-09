@@ -38,12 +38,13 @@ function getGridPosition(index) {
 }
 
 function getRandomVelocity() {
-  const baseSpeed = 1.5;
+  const baseSpeed = 0.5;  // Adjusted speed for smoother descent
   return {
-    x: (Math.random() - 0.5) * baseSpeed,
-    y: Math.random() * baseSpeed + 1
+      x: (Math.random() - 0.5) * baseSpeed,
+      y: Math.random() * baseSpeed + 0.5
   };
 }
+
 
 function createGameElement(type, index) {
   if (isGameOver || isPaused || activeElements >= maxElements) return;
@@ -214,17 +215,19 @@ function playSound(type) {
 
 function gameLoop(currentTime) {
   if (!isGameOver && !isPaused) {
-    const deltaTime = currentTime - lastTime;
-    
-    if (deltaTime >= 5000 && document.querySelectorAll('.game-element').length === 0) {
-      spawnWave();
-      lastTime = currentTime;
-    }
-    
-    updateElementPositions();
-    requestAnimationFrame(gameLoop);
+      const deltaTime = currentTime - lastTime;
+
+      // Adjusting the spawn interval
+      if (deltaTime >= 7000 && document.querySelectorAll('.game-element').length === 0) {
+          spawnWave();
+          lastTime = currentTime;
+      }
+
+      updateElementPositions();
+      requestAnimationFrame(gameLoop);
   }
 }
+
 
 // Rest of the functions remain the same...
 // (updateTimer, endGame, resetGame, togglePause, saveGameScore)
