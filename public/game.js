@@ -38,10 +38,10 @@ function getGridPosition(index) {
 }
 
 function getRandomVelocity() {
-  const baseSpeed = 0.5;  // Adjusted speed for smoother descent
+  const baseSpeed = 0.3; // Lower speed for smoother movement
   return {
       x: (Math.random() - 0.5) * baseSpeed,
-      y: Math.random() * baseSpeed + 0.5
+      y: Math.random() * baseSpeed + 0.3
   };
 }
 
@@ -104,60 +104,42 @@ function createGameElement(type, index) {
 
 function spawnWave() {
   const totalSpots = grid.columns * grid.rows;
-  const elements = [];
-  
-  // Create a shuffled array of positions
-  const positions = Array.from({length: totalSpots}, (_, i) => i);
+  const availableSpots = Math.min(totalSpots, maxElements - activeElements);
+
+  const positions = Array.from({ length: availableSpots }, (_, i) => i);
   positions.sort(() => Math.random() - 0.5);
-  
-  // Spawn elements in random positions
+
   let index = 0;
-  
-  // Spawn 1 special star
-  elements.push(createGameElement('special', positions[index++]));
-  
-  // Spawn dolphins (60% of remaining spots)
-  const dolphinCount = Math.floor((positions.length - 1) * 0.6);
-  for (let i = 0; i < dolphinCount && index < positions.length; i++) {
-    elements.push(createGameElement('dolphin', positions[index++]));
+  if (availableSpots > 0) {
+      createGameElement('special', positions[index++]);  // 1 special element
+
+      // Remaining elements as dolphins and bombs
+      const dolphinCount = Math.floor((availableSpots - 1) * 0.6);
+      for (let i = 0; i < dolphinCount && index < availableSpots; i++) {
+          createGameElement('dolphin', positions[index++]);
+      }
+      while (index < availableSpots) {
+          createGameElement('bomb', positions[index++]);
+      }
   }
-  
-  // Fill remaining spots with bombs
-  while (index < positions.length) {
-    elements.push(createGameElement('bomb', positions[index++]));
-  }
-  
-  return elements;
 }
 
 function activateFreeze() {
   isTimeFrozen = true;
-  gameContainer.classList.add('frozen');
-  
-  // Add glowing effect to all clickable elements
   document.querySelectorAll('.game-element').forEach(el => {
-    el.classList.add('clickable');
-    el.velocity = { x: 0, y: 0 };
+      el.classList.add('clickable');
+      el.velocity = { x: 0, y: 0 };
   });
 
-  // Show countdown timer
-  const freezeTimer = document.createElement('div');
-  freezeTimer.className = 'freeze-timer';
-  gameContainer.appendChild(freezeTimer);
-  
   let freezeTime = 5;
-  
-  const countDown = setInterval(() => {
-    freezeTime--;
-    freezeTimer.textContent = freezeTime;
-    
-    if (freezeTime <= 0) {
-      clearInterval(countDown);
-      endFreeze();
-      freezeTimer.remove();
-    }
+  const freezeTimer = setInterval(() => {
+      if (--freezeTime <= 0) {
+          clearInterval(freezeTimer);
+          endFreeze();
+      }
   }, 1000);
 }
+
 
 function endFreeze() {
   isTimeFrozen = false;
@@ -171,32 +153,33 @@ function endFreeze() {
 
 function updateElementPositions() {
   if (isPaused || isTimeFrozen) return;
-  
+
   const elements = document.querySelectorAll('.game-element');
   const rect = gameContainer.getBoundingClientRect();
-  
+
   elements.forEach(element => {
-    const elementRect = element.getBoundingClientRect();
-    let x = parseFloat(element.style.left) || 0;
-    let y = parseFloat(element.style.top) || 0;
-    
-    x += element.velocity.x;
-    y += element.velocity.y;
-    
-    if (x <= 0 || x + elementRect.width >= rect.width) {
-      element.velocity.x *= -1;
-      x = x <= 0 ? 0 : rect.width - elementRect.width;
-    }
-    
-    element.style.left = `${x}px`;
-    element.style.top = `${y}px`;
-    
-    if (y > rect.height) {
-      activeElements--;
-      element.remove();
-    }
+      const elementRect = element.getBoundingClientRect();
+      let x = parseFloat(element.style.left) || 0;
+      let y = parseFloat(element.style.top) || 0;
+
+      x += element.velocity.x;
+      y += element.velocity.y;
+
+      if (x <= 0 || x + elementRect.width >= rect.width) {
+          element.velocity.x *= -1;
+          x = x <= 0 ? 0 : rect.width - elementRect.width;
+      }
+
+      element.style.left = `${x}px`;
+      element.style.top = `${y}px`;
+
+      if (y > rect.height) {
+          activeElements--;
+          element.remove();
+      }
   });
 }
+ 
 
 // Sound effects
 function playSound(type) {
@@ -285,20 +268,20 @@ function endGame() {
 }
 
 function resetGame() {
+  clearElements(); // Clear all game elements
+  activeElements = 0;
   score = 0;
   isGameOver = false;
   isPaused = false;
   timeRemaining = 30;
-  lastTime = performance.now();
-  
+
   scoreElement.textContent = 'Score: 0';
   timerElement.textContent = 'Time: 30s';
-  timerElement.classList.remove('warning');
-  pauseBtn.classList.remove('paused');
   menuOverlay.style.display = 'none';
-  
+
   requestAnimationFrame(gameLoop);
 }
+
 
 function togglePause() {
   isPaused = !isPaused;
