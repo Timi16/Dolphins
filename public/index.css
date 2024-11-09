@@ -288,4 +288,22 @@ body {
     text-decoration: none; /* Ensures no underline on hover */
 }
 
-  
+#track-referral-button-10 {
+    background: linear-gradient(45deg, #0066ff, #0052cc); /* Matches the base button color */
+    color: #fff;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    min-width: 120px;
+    text-align: center;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 14px;
+    box-shadow: 0 2px 4px rgba(0, 102, 255, 0.2);
+}
+
+#track-referral-button-10:hover {
+    background: linear-gradient(45deg, #0052cc, #0040aa); /* Darker shade on hover for consistency */
+}
