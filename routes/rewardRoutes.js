@@ -111,29 +111,61 @@ router.post('/daily-reward', authenticateJWT, async (req, res) => {
 });
 
 
-// Generate invite link
-router.get('/generate-invite/:username',authenticateJWT, async (req, res) => {
+// Generate invite link with improved error handling and formatting
+router.get('/generate-invite/:username', authenticateJWT, async (req, res) => {
     const { username } = req.params;
 
     try {
-        const user = await User.findOne({ username });
-        if (!user) return res.status(404).json({ message: 'User not found' });
+        // Input validation
+        if (!username) {
+            return res.status(400).json({ 
+                success: false,
+                message: 'Username is required' 
+            });
+        }
 
-        // Generate a unique invite code using a combination of username and timestamp
+        const user = await User.findOne({ username });
+        if (!user) {
+            return res.status(404).json({ 
+                success: false,
+                message: 'User not found' 
+            });
+        }
+
+        // Generate a more readable invite code
         const timestamp = Date.now();
-        const inviteCode = `${username.toUpperCase()}-${timestamp.toString(36)}`;
+        const randomSuffix = Math.random().toString(36).substring(2, 8);
+        const inviteCode = `${username}_${randomSuffix}`;
 
         // Save invite code to user
         user.inviteCode = inviteCode;
         await user.save();
 
-        // Construct the invite link directly to work.html
-        const inviteLink = `${req.protocol}://t.me/DolphinsProject_Bot?inviteCode=${inviteCode}`;
+        // Create a properly encoded invite link
+        const botUsername = 'DolphinsProject_Bot';
+        const encodedInviteCode = encodeURIComponent(inviteCode);
+        
+        // Format the telegram deep link properly
+        const inviteLink = `https://t.me/${botUsername}?start=${encodedInviteCode}`;
 
-        res.json({ inviteLink });
+        // Return both the invite code and link
+        return res.json({ 
+            success: true,
+            data: {
+                username: user.username,
+                inviteCode: inviteCode,
+                inviteLink: inviteLink,
+                telegramLink: inviteLink
+            }
+        });
+
     } catch (err) {
         console.error('Error generating invite link:', err);
-        res.status(500).json({ message: 'Server error generating invite link' });
+        return res.status(500).json({ 
+            success: false,
+            message: 'Server error generating invite link',
+            error: err.message 
+        });
     }
 });
 
