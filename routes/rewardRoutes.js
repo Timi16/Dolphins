@@ -112,33 +112,30 @@ router.post('/daily-reward', authenticateJWT, async (req, res) => {
 
 
 // Generate invite link
-// Update the /generate-invite/:username endpoint in rewardRoutes.js
-
-router.get('/generate-invite/:username', authenticateJWT, async (req, res) => {
+router.get('/generate-invite/:username',authenticateJWT, async (req, res) => {
     const { username } = req.params;
-  
+
     try {
-      const user = await User.findOne({ username });
-      if (!user) return res.status(404).json({ message: 'User not found' });
-  
-      // Generate a unique invite code using a combination of username and timestamp
-      const timestamp = Date.now();
-      const inviteCode = `${username.toUpperCase()}-${timestamp.toString(36)}`;
-  
-      // Save invite code to user
-      user.inviteCode = inviteCode;
-      await user.save();
-  
-      // Construct the Telegram bot deep link
-      const telegramBotUsername = 'DolphinsProject_Bot';
-      const telegramDeepLink = `https://t.me/${telegramBotUsername}?start=${encodeURIComponent(inviteCode)}`;
-  
-      res.json({ telegramDeepLink });
+        const user = await User.findOne({ username });
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        // Generate a unique invite code using a combination of username and timestamp
+        const timestamp = Date.now();
+        const inviteCode = `${username.toUpperCase()}-${timestamp.toString(36)}`;
+
+        // Save invite code to user
+        user.inviteCode = inviteCode;
+        await user.save();
+
+        // Construct the invite link directly to work.html
+        const inviteLink = `${req.protocol}://t.me/DolphinsProject_Bot?inviteCode=${inviteCode}`;
+
+        res.json({ inviteLink });
     } catch (err) {
-      console.error('Error generating invite link:', err);
-      res.status(500).json({ message: 'Server error generating invite link' });
+        console.error('Error generating invite link:', err);
+        res.status(500).json({ message: 'Server error generating invite link' });
     }
-  });
+});
 
 router.get('/user/:username', authenticateJWT, async (req, res) => {
     try {

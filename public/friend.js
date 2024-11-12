@@ -52,6 +52,49 @@ function checkUserLoggedIn() {
     return { username, token };
 }
 
+function generateInviteLink() {
+    const user = checkUserLoggedIn();
+    if (!user) return;
+
+    fetch(`https://dolphins-ai6u.onrender.com/api/rewards/generate-invite/${user.username}`, {
+        method: 'GET',
+        headers: {
+            'Authorization': user.token,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        const inviteLink = data.inviteLink;
+        
+        // Create share data
+        const shareData = {
+            title: 'Join Dolphins',
+            text: 'Hey! Join me on Dolphins using my invite link!',
+            url: inviteLink
+        };
+
+        // Try native sharing first
+        if (navigator.share) {
+            navigator.share(shareData)
+                .then(() => {
+                    showNotification('Thanks for sharing!');
+                })
+                .catch(error => {
+                    // If share fails, fallback to clipboard
+                    copyToClipboard(inviteLink);
+                });
+        } else {
+            // Fallback to clipboard on devices without share capability
+            copyToClipboard(inviteLink);
+        }
+    })
+    .catch(error => {
+        console.error('Error generating invite link:', error);
+        showNotification('Failed to generate invite link');
+    });
+}
+
 // Helper function for clipboard fallback
 function copyToClipboard(text) {
     // Create temporary input element
@@ -94,82 +137,50 @@ function showNotification(message) {
     }, 3000);
 }
 
-// Update the generateInviteLink function in friend.js
+function displayInvitedFriends() {
+    const username = localStorage.getItem('username');
+    const token = localStorage.getItem('token');
+    if (!username || !token) {
+        return;
+    }
 
-async function generateInviteLink() {
-    const user = checkUserLoggedIn();
-    if (!user) return;
-  
-    try {
-      const response = await fetch(`https://dolphins-ai6u.onrender.com/api/rewards/generate-invite/${user.username}`, {
+    fetch(`https://dolphins-ai6u.onrender.com/api/rewards/referrals/${username}`, {
         method: 'GET',
         headers: {
-          'Authorization': user.token,
-          'Content-Type': 'application/json'
+            'Authorization': token,
+            'Content-Type': 'application/json'
         }
-      });
-  
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to generate invite link');
-      }
-  
-      if (!data.telegramDeepLink) {
-        throw new Error('No invite link received from server');
-      }
-  
-      // Create share data with the Telegram deep link
-      const shareData = {
-        title: 'Join Dolphins',
-        text: 'Hey! Join me on Dolphins using my invite link!',
-        url: data.telegramDeepLink
-      };
-  
-      if (navigator.share) {
-        try {
-          await navigator.share(shareData);
-          showNotification('Thanks for sharing!');
-        } catch (error) {
-          if (error.name !== 'AbortError') {
-            copyToClipboard(data.telegramDeepLink);
-          }
-        }
-      } else {
-        copyToClipboard(data.telegramDeepLink);
-      }
-  
-      // Update the displayed list of invited friends
-      displayInvitedFriends(data.referredUsers);
-    } catch (error) {
-      console.error('Error generating invite link:', error);
-      showNotification(error.message || 'Failed to generate invite link');
-    }
-  }
-  
-  function displayInvitedFriends(referredUsers) {
-    const friendListContainer = document.getElementById('invited-friends-list');
-    const friendCountContainer = document.querySelector('.friend-count');
-  
-    if (!friendListContainer || !friendCountContainer) {
-      console.error('Required DOM elements not found');
-      return;
-    }
-  
-    friendListContainer.innerHTML = '';
-    friendCountContainer.textContent = `${referredUsers.length} friend${referredUsers.length === 1 ? '' : 's'}`;
-  
-    referredUsers.forEach((friend) => {
-      if (typeof friend === 'string' && friend.length > 0) {
-        const listItem = document.createElement('li');
-        listItem.classList.add('friend-item');
-        listItem.innerHTML = `
-          <div class="friend-avatar">${friend.charAt(0).toUpperCase()}</div>
-          <div class="friend-info">
-            <div class="friend-name">${escapeHtml(friend)}</div>
-          </div>
-        `;
-        friendListContainer.appendChild(listItem);
-      }
-    });
-  }
+    })
+        .then(async (response) => {
+            const text = await response.text();
+            console.log('Raw response:', text);
+            const data = JSON.parse(text);
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to fetch invited friends');
+            }
+
+            const friendsList = data.referredUsers || [];
+            const friendCount = friendsList.length;
+            const friendListContainer = document.getElementById('invited-friends-list');
+            const friendCountContainer = document.querySelector('.friend-count');
+
+            friendListContainer.innerHTML = '';
+            friendCountContainer.textContent = `${friendCount} friend${friendCount === 1 ? '' : 's'}`;
+
+            friendsList.forEach((friend) => {
+                const listItem = document.createElement('li');
+                listItem.classList.add('friend-item');
+                listItem.innerHTML = `
+                    <div class="friend-avatar">${friend.charAt(0)}</div>
+                    <div class="friend-info">
+                        <div class="friend-name">${friend}</div>
+                    </div>
+                `;
+                friendListContainer.appendChild(listItem);
+            });
+        })
+        .catch((error) => {
+            console.error('Error fetching invited friends:', error);
+        });
+}
