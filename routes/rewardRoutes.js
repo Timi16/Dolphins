@@ -128,7 +128,7 @@ router.get('/generate-invite/:username',authenticateJWT, async (req, res) => {
         await user.save();
 
         // Construct the invite link directly to index.html
-        const inviteLink = `https://t.me/DolphinsProject_Bot/Dolphins?inviteCode=${inviteCode}`;
+        const inviteLink = `https://t.me/DolphinsProject_Bot?inviteCode=${inviteCode}`;
 
         res.json({ inviteLink });
     } catch (err) {
