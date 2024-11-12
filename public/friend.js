@@ -1,23 +1,16 @@
-// Load Telegram WebApp SDK
-window.Telegram.WebApp.ready(); 
-
-window.onload = function() {
-    const tg = window.Telegram.WebApp;
-    
-    // Access `initDataUnsafe` for Telegram-specific data
-    const initDataUnsafe = tg.initDataUnsafe;
-    const inviteCode = initDataUnsafe.start_param || localStorage.getItem('pendingInviteCode');
+window.onload = function () {
+    const urlParams = new URLSearchParams(window.location.search);
+    const inviteCode = urlParams.get('inviteCode');
 
     if (inviteCode) {
-        localStorage.setItem('pendingInviteCode', inviteCode);
-        handleInviteCode(inviteCode);  // Process invite code if present
+        handleInviteCode(inviteCode);
     }
 
     displayInvitedFriends();
 
+    // Attach event listener to the button
     document.getElementById('invite-link').addEventListener('click', generateInviteLink);
 };
-
 
 function handleInviteCode(inviteCode) {
     const username = localStorage.getItem('username');

@@ -17,24 +17,22 @@
         </div>
     </div>
 
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
         window.onload = function() {
-            const tg = window.Telegram.WebApp;
-
-            // Check if user already has token and username
+            // Check if both token and username exist in localStorage
             const token = localStorage.getItem('token');
             const username = localStorage.getItem('username');
+            
             if (token && username) {
-                tg.MainButton.text = "Loading...";
-                tg.MainButton.show();
+                // Redirect to home.html if user is already logged in
                 window.location.href = 'loading.html';
             }
 
-            // Handle invite code via Telegram WebApp data
-            const initDataUnsafe = tg.initDataUnsafe;
-            const inviteCode = initDataUnsafe.start_param; // Grab the start parameter if present
+            // Check for invite code in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const inviteCode = urlParams.get('inviteCode');
             if (inviteCode) {
+                // Store invite code for registration
                 localStorage.setItem('pendingInviteCode', inviteCode);
             }
         };
@@ -43,12 +41,21 @@
             event.preventDefault();
 
             const username = document.getElementById('username').value.trim();
-            if (username === "") return;
+            if (username === "") {
+                return;
+            }
 
+            // Get the stored invite code if it exists
             const inviteCode = localStorage.getItem('pendingInviteCode');
-            const requestBody = { username, inviteCode };
+            
+            // Prepare request body
+            const requestBody = { username };
+            if (inviteCode) {
+                requestBody.inviteCode = inviteCode;
+            }
 
             try {
+                // Use the correct endpoint
                 const response = await fetch('https://dolphins-ai6u.onrender.com/api/user/register', {
                     method: 'POST',
                     headers: {
@@ -60,6 +67,7 @@
                 const data = await response.json();
                 console.log('Registration response:', data);
                 if (data.token && data.userId) {
+                    // Store both token, username, and userId
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('username', username);
                     localStorage.setItem('userId', data.userId);
@@ -68,8 +76,8 @@
                     localStorage.removeItem('pendingInviteCode');
                     window.location.href = 'home.html';
                 } else {
-                    alert('Registration failed');
-                }
+                    return 
+                }        
             } catch (error) {
                 console.error('Error:', error);
                 alert('There was an error with the registration process.');
@@ -78,4 +86,3 @@
     </script>
 </body>
 </html>
-
