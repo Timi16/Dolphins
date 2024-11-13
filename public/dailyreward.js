@@ -1,6 +1,7 @@
-// Get the initial SOWLS score, current day, and last claim time from local storage or set defaults
+// Get initial values from local storage or set defaults
 let sowls = parseInt(localStorage.getItem('sowls')) || 0;
 let currentDay = parseInt(localStorage.getItem('currentDay')) || 1;
+let lastClaimTime = parseInt(localStorage.getItem('lastClaimTime')) || 0; // Get last claim time
 
 // Array of daily rewards
 const dailyRewards = [500, 1500, 2500, 3500, 5000, 7000, 8000, 9000, 10000];
@@ -21,6 +22,14 @@ function hidePopup() {
 
 // Function to claim the daily reward through the API
 async function claimDailyReward(day) {
+    const now = Date.now();
+
+    // Check if 24 hours have passed since the last claim
+    if (now - lastClaimTime < 24 * 60 * 60 * 1000) {
+        showPopup('You can only claim the reward once every 24 hours.');
+        return;
+    }
+
     try {
         const token = localStorage.getItem('token');
         const response = await fetch('https://dolphins-ai6u.onrender.com/api/rewards/daily-reward', {
@@ -35,18 +44,19 @@ async function claimDailyReward(day) {
         const data = await response.json();
 
         if (response.ok) {
-            // Update the sowls score
+            // Update the sowls score and current day
             sowls = data.newScore;
-            
-            // Update the current day and save it to localStorage
             currentDay = data.nextDay;
-            localStorage.setItem('currentDay', currentDay);
+            lastClaimTime = now; // Update last claim time
             
-            // Mark the day as claimed in local storage
+            // Save values to local storage
+            localStorage.setItem('sowls', sowls);
+            localStorage.setItem('currentDay', currentDay);
+            localStorage.setItem('lastClaimTime', lastClaimTime);
             localStorage.setItem(`day${day}Claimed`, 'true');
             
             // Show success popup
-            showPopup(`Congratulations! You've claimed ${dailyRewards[day-1]} Dolphins!`);
+            showPopup(`Congratulations! You've claimed ${dailyRewards[day - 1]} Dolphins!`);
             
             // Update the UI
             updateUI();
@@ -69,15 +79,12 @@ function updateUI() {
         card.classList.remove('claimed', 'unlocked', 'locked');
         
         if (isClaimed) {
-            // Mark as claimed
             card.classList.add('claimed');
             card.style.cursor = 'default';
         } else if (day === currentDay) {
-            // Mark as available to claim
             card.classList.add('unlocked');
             card.style.cursor = 'pointer';
         } else {
-            // Mark as locked
             card.classList.add('locked');
             card.style.cursor = 'not-allowed';
         }
@@ -110,3 +117,4 @@ document.getElementById('popup-overlay').addEventListener('click', (e) => {
 
 // Initialize the UI
 updateUI();
+
