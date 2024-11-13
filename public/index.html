@@ -32,19 +32,21 @@
                 window.location.href = 'loading.html';
             }
 
-            // Check for invite code from Telegram Mini App
-            const startParam = new URLSearchParams(tg.initData).get('start_param');
-            if (startParam && startParam.startsWith('invite-')) {
-                const inviteCode = startParam.replace('invite-', '');
+            // Check for invite code from Telegram parameters
+            if (tg.initDataUnsafe && tg.initDataUnsafe.start_param) {
+                const inviteCode = tg.initDataUnsafe.start_param;
                 localStorage.setItem('pendingInviteCode', inviteCode);
             }
 
-            // Also check URL parameters for backward compatibility
+            // Check for direct inviteCode in URL parameters
             const urlParams = new URLSearchParams(window.location.search);
             const urlInviteCode = urlParams.get('inviteCode');
             if (urlInviteCode && !localStorage.getItem('pendingInviteCode')) {
                 localStorage.setItem('pendingInviteCode', urlInviteCode);
             }
+
+            // Debug log to check invite code
+            console.log('Stored invite code:', localStorage.getItem('pendingInviteCode'));
         };
 
         document.getElementById('registrationForm').addEventListener('submit', async function(event) {
@@ -52,15 +54,18 @@
 
             const username = document.getElementById('username').value.trim();
             if (username === "") {
-                tg.showPopup({
-                    title: 'Error',
-                    message: 'Please enter a username'
-                });
+                if (tg.initDataUnsafe) {
+                    tg.showPopup({
+                        title: 'Error',
+                        message: 'Please enter a username'
+                    });
+                }
                 return;
             }
 
             // Get the stored invite code if it exists
             const inviteCode = localStorage.getItem('pendingInviteCode');
+            console.log('Processing registration with invite code:', inviteCode);
             
             // Prepare request body
             const requestBody = { username };
@@ -86,10 +91,29 @@
                     localStorage.setItem('username', username);
                     localStorage.setItem('userId', data.userId);
                     localStorage.setItem('completedTasks', JSON.stringify({}));
+                    
+                    // Process the invite code if it exists
+                    if (inviteCode) {
+                        try {
+                            const referralResponse = await fetch(`https://dolphins-ai6u.onrender.com/api/referral/${inviteCode}`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': data.token
+                                },
+                                body: JSON.stringify({ username })
+                            });
+                            const referralData = await referralResponse.json();
+                            console.log('Referral processed:', referralData);
+                        } catch (err) {
+                            console.error('Error processing referral:', err);
+                        }
+                    }
+
                     localStorage.removeItem('pendingInviteCode');
 
-                    // If it's a Telegram Mini App, show success message
-                    if (tg.initDataUnsafe.user) {
+                    // Show success message if in Telegram
+                    if (tg.initDataUnsafe) {
                         tg.showPopup({
                             title: 'Success!',
                             message: 'Registration successful',
@@ -102,17 +126,21 @@
                         window.location.href = 'home.html';
                     }
                 } else {
-                    tg.showPopup({
-                        title: 'Error',
-                        message: data.message || 'Registration failed'
-                    });
+                    if (tg.initDataUnsafe) {
+                        tg.showPopup({
+                            title: 'Error',
+                            message: data.message || 'Registration failed'
+                        });
+                    }
                 }        
             } catch (error) {
                 console.error('Error:', error);
-                tg.showPopup({
-                    title: 'Error',
-                    message: 'There was an error with the registration process.'
-                });
+                if (tg.initDataUnsafe) {
+                    tg.showPopup({
+                        title: 'Error',
+                        message: 'There was an error with the registration process.'
+                    });
+                }
             }
         });
     </script>
