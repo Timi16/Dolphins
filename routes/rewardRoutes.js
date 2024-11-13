@@ -70,12 +70,12 @@ router.post('/complete-task',authenticateJWT, async (req, res) => {
 });
 
 // Get daily reward
-// Define the reward points array
 const dailyRewards = [500, 1500, 2500, 3500, 5000, 7000, 8000, 9000, 10000];
 
 // Modify /daily-reward endpoint
 router.post('/daily-reward', authenticateJWT, async (req, res) => {
     const { username } = req.body;
+
     try {
         const user = await User.findOne({ username });
         if (!user) return res.status(404).json({ message: 'User not found' });
@@ -93,10 +93,11 @@ router.post('/daily-reward', authenticateJWT, async (req, res) => {
         const dailyRewardAmount = dailyRewards[(currentDay - 1) % dailyRewards.length];
 
         // Update user's score and set new reward information
-        user.score += dailyRewardAmount;
+        user.score += dailyRewardAmount; // Add the reward to the user's score
         user.lastDailyRewardDate = new Date(); // Update with today's date
         user.currentDay = currentDay < dailyRewards.length ? currentDay + 1 : 1; // Reset to day 1 if at end of array
-        await user.save();
+        
+        await user.save(); // Save the updated user data
 
         // Respond with the updated score and reward details
         return res.json({
@@ -109,7 +110,6 @@ router.post('/daily-reward', authenticateJWT, async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 });
-
 
 // Generate invite link
 router.get('/generate-invite/:username',authenticateJWT, async (req, res) => {
@@ -128,7 +128,7 @@ router.get('/generate-invite/:username',authenticateJWT, async (req, res) => {
         await user.save();
 
         // Construct the invite link directly to index.html
-        const inviteLink = `https://t.me/DolphinsProject_Bot/Dolphins?inviteCode=${inviteCode}`;
+        const inviteLink = `https://dolphins-ai6u.onrender.com?inviteCode=${inviteCode}`;
 
         res.json({ inviteLink });
     } catch (err) {
