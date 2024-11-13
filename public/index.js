@@ -229,6 +229,10 @@ function earnReward(task, amount) {
             buttonId = 'watch-ads-button';
             completedText = 'Watched';
             break;
+        case 'like-button' :
+            buttonId = 'like-button';
+            completedText = 'Subscribed';
+            break;
     }
     
     button = document.getElementById(buttonId);
