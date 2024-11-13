@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Registration</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script> <!-- Telegram Web App API -->
 </head>
 <body>
     <div class="container">
@@ -16,7 +17,7 @@
             </form>
         </div>
     </div>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
     <script>
         window.onload = function() {
             const token = localStorage.getItem('token');
@@ -24,59 +25,61 @@
 
             if (token && username) {
                 window.location.href = 'loading.html';
+                return;
             }
 
-            // Check if the app is running in Telegram
+            // Check if the app is running in Telegram WebApp
             if (window.Telegram.WebApp) {
                 const telegramInitData = window.Telegram.WebApp.initDataUnsafe;
                 const inviteCode = telegramInitData.start_param;
 
                 if (inviteCode) {
+                    // Simulate URL parameters by using localStorage or custom redirection
                     localStorage.setItem('pendingInviteCode', inviteCode);
+
+                    // Now redirect to a custom URL to mimic browser behavior
+                    simulateBrowserUrl(inviteCode);
                 }
             }
+        };
+
+        // Function to simulate the browser URL behavior
+        function simulateBrowserUrl(inviteCode) {
+            // You can use localStorage or custom state to simulate query params
+            const simulatedUrl = `https://dolphins-ai6u.onrender.com?inviteCode=${inviteCode}`;
+            console.log('Simulated URL:', simulatedUrl);
+            
+            // Redirect the app or mimic further URL processing here.
+            localStorage.setItem('simulatedUrl', simulatedUrl);
         }
-            document.getElementById('registrationForm').addEventListener('submit', async function(event) {
+
+        document.getElementById('registrationForm').addEventListener('submit', async function(event) {
             event.preventDefault();
 
             const username = document.getElementById('username').value.trim();
-            if (username === "") {
-                return;
-            }
+            if (username === "") return;
 
-            // Get the stored invite code if it exists
             const inviteCode = localStorage.getItem('pendingInviteCode');
-            
-            // Prepare request body
             const requestBody = { username };
-            if (inviteCode) {
-                requestBody.inviteCode = inviteCode;
-            }
+            if (inviteCode) requestBody.inviteCode = inviteCode;
 
             try {
-                // Use the correct endpoint
                 const response = await fetch('https://dolphins-ai6u.onrender.com/api/user/register', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(requestBody)
                 });
 
                 const data = await response.json();
                 console.log('Registration response:', data);
+
                 if (data.token && data.userId) {
-                    // Store both token, username, and userId
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('username', username);
                     localStorage.setItem('userId', data.userId);
-
-                    localStorage.setItem('completedTasks', JSON.stringify({}));
                     localStorage.removeItem('pendingInviteCode');
                     window.location.href = 'home.html';
-                } else {
-                    return 
-                }        
+                }
             } catch (error) {
                 console.error('Error:', error);
                 alert('There was an error with the registration process.');
@@ -85,3 +88,4 @@
     </script>
 </body>
 </html>
+
