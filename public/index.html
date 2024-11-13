@@ -16,28 +16,27 @@
             </form>
         </div>
     </div>
-
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
         window.onload = function() {
-            // Check if both token and username exist in localStorage
             const token = localStorage.getItem('token');
             const username = localStorage.getItem('username');
-            
+
             if (token && username) {
-                // Redirect to home.html if user is already logged in
                 window.location.href = 'loading.html';
             }
 
-            // Check for invite code in URL
-            const urlParams = new URLSearchParams(window.location.search);
-            const inviteCode = urlParams.get('inviteCode');
-            if (inviteCode) {
-                // Store invite code for registration
-                localStorage.setItem('pendingInviteCode', inviteCode);
-            }
-        };
+            // Check if the app is running in Telegram
+            if (window.Telegram.WebApp) {
+                const telegramInitData = window.Telegram.WebApp.initDataUnsafe;
+                const inviteCode = telegramInitData.start_param;
 
-        document.getElementById('registrationForm').addEventListener('submit', async function(event) {
+                if (inviteCode) {
+                    localStorage.setItem('pendingInviteCode', inviteCode);
+                }
+            }
+        }
+            document.getElementById('registrationForm').addEventListener('submit', async function(event) {
             event.preventDefault();
 
             const username = document.getElementById('username').value.trim();
