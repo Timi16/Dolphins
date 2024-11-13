@@ -128,8 +128,8 @@ router.get('/generate-invite/:username',authenticateJWT, async (req, res) => {
         await user.save();
 
         // Construct the invite link directly to index.html
-        const inviteLink = `https://dolphins-ai6u.onrender.com?inviteCode=${inviteCode}`;
-
+        const inviteLink = `https://t.me/DolphinsProject_Bot?startapp=invite-${inviteCode}`;
+        
         res.json({ inviteLink });
     } catch (err) {
         console.error('Error generating invite link:', err);
