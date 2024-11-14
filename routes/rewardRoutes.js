@@ -309,7 +309,7 @@ router.post('/update-game-score',authenticateJWT, async (req, res) => {
     }
 });
 
-router.post('/ads/user/:userId', async (req, res) => {
+router.post('/ads/user/:userId', authenticateJWT, async (req, res) => {
     const { userId } = req.params;
     const { newScore } = req.body;  // Retrieve newScore from the request body
 
@@ -317,8 +317,8 @@ router.post('/ads/user/:userId', async (req, res) => {
         const user = await User.findById(userId);
         if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
-        // Update the user's score to the newScore provided in the request
-        user.score = newScore;
+        // Add the newScore to the existing score
+        user.score += newScore;
         await user.save();
 
         return res.json({
@@ -335,5 +335,6 @@ router.post('/ads/user/:userId', async (req, res) => {
         res.status(500).json({ success: false, message: 'Server error', error: err.message });
     }
 });
+
 
 module.exports=router;

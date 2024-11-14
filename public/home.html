@@ -95,7 +95,7 @@
 
     <script src="index.js"></script>
     <script>
-        const userId = localStorage.getItem("userId");
+         const userId = localStorage.getItem("userId");
         const token = localStorage.getItem("token");
         const rewardUrl = `https://dolphins-ai6u.onrender.com/api/rewards/ads/user/${userId}`;
         const scoreElement = document.getElementById('score-value');
@@ -149,8 +149,8 @@
                 AdController.show().then(() => {
                     // Immediate frontend update
                     const currentScore = parseInt(scoreElement.textContent) || 0;
-                    const newScore = currentScore + 100;
-                    scoreElement.textContent = newScore;
+                    const newScore = 100;  // Set the score increment here
+                    scoreElement.textContent = currentScore + newScore;
                     displayPopup("You've earned 100 dolphins! 🐬");
 
                     // Backend update with newScore
@@ -158,7 +158,7 @@
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'Authorization': token
+                            'Authorization': `Bearer ${token}`  // Adding 'Bearer ' prefix
                         },
                         body: JSON.stringify({ newScore })  // Send newScore in the request body
                     })
@@ -193,7 +193,6 @@
 
         // Start the cooldown check on page load
         checkAdCooldown();
-        // Add styles for popup notification and cooldown
         const style = document.createElement('style');
         style.innerHTML = `
             .popup-notification {
