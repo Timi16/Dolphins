@@ -95,102 +95,107 @@
 
     <script src="index.js"></script>
     <script>
-        const userId= localStorage.getItem("userId")
+        const userId = localStorage.getItem("userId");
+        const token = localStorage.getItem("token");
         const rewardUrl = `https://dolphins-ai6u.onrender.com/api/rewards/ads/user/${userId}`;
+        const scoreElement = document.getElementById('score-value');
+        const watchAdsButton = document.getElementById('watch-ads-button');
+    
         // Initialize Adsgram Ad Controller
         const AdController = window.Adsgram.init({ blockId: "5150" });
-        const scoreElement = document.getElementById('score-value');
-        // Get the watch ads button
-        const watchAdsButton = document.getElementById('watch-ads-button');
-
+    
         // Define cooldown time (5 minutes in milliseconds)
         const cooldownTime = 5 * 60 * 1000;
         let nextAdTime = localStorage.getItem("nextAdTime") || 0;
-
+    
         // Function to display popup notification
         function displayPopup(message) {
-            // Create popup div
             const popup = document.createElement('div');
             popup.className = 'popup-notification';
             popup.innerText = message;
             document.body.appendChild(popup);
-
-            // Add fade-in and fade-out animation
+    
             popup.style.opacity = '1';
             setTimeout(() => {
                 popup.style.opacity = '0';
                 setTimeout(() => {
-                    popup.remove(); // Remove popup from DOM after fade-out
+                    popup.remove();
                 }, 1000);
-            }, 3000); // Display for 3 seconds
+            }, 3000);
         }
-
+    
         // Timer function to check cooldown and display countdown
         function checkAdCooldown() {
             const now = Date.now();
             const timeLeft = nextAdTime - now;
-
+    
             if (timeLeft <= 0) {
                 watchAdsButton.disabled = false;
                 watchAdsButton.innerText = "+100 dolphins";
-                watchAdsButton.classList.remove('cooldown'); // Remove cooldown styling
+                watchAdsButton.classList.remove('cooldown');
             } else {
                 watchAdsButton.disabled = true;
                 const minutes = Math.floor(timeLeft / 60000);
                 const seconds = Math.floor((timeLeft % 60000) / 1000);
                 watchAdsButton.innerText = `Wait ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-                watchAdsButton.classList.add('cooldown'); // Add cooldown styling
+                watchAdsButton.classList.add('cooldown');
                 setTimeout(checkAdCooldown, 1000);
             }
         }
-        const token = localStorage.getItem("token");
+    
+        // Event listener for the watch ads button
         watchAdsButton.addEventListener('click', () => {
             if (Date.now() >= nextAdTime) {
                 AdController.show().then(() => {
-
-                    // Immediately add 100 points to the displayed score
+                    // Immediate frontend update
                     const currentScore = parseInt(scoreElement.textContent) || 0;
-                    scoreElement.textContent = currentScore + 100;
+                    const newScore = currentScore + 100;
+                    scoreElement.textContent = newScore;
                     displayPopup("You've earned 100 dolphins! 🐬");
-
-                    // Send the reward request to backend
+    
+                    // Backend update
                     fetch(rewardUrl, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'Authorization': token
+                            'Authorization': `Bearer ${token}`  // Ensure Bearer format
                         },
                         body: JSON.stringify({ rewardStatus: 'completed' })
                     })
                     .then(response => response.json())
                     .then(data => {
-                        // Display backend message or update score with backend-confirmed value
-                        displayPopup(data.message || "You have received 100 Points!");
-                        
-                        // Set cooldown time
+                        if (data.success) {
+                            scoreElement.textContent = data.data.score;  // Confirmed score
+                            displayPopup(data.data.message || "Score updated successfully!");
+                        } else {
+                            // If backend fails, revert score
+                            scoreElement.textContent = currentScore;
+                            alert('Failed to save score on the server.');
+                        }
+    
                         nextAdTime = Date.now() + cooldownTime;
                         localStorage.setItem("nextAdTime", nextAdTime);
-                        checkAdCooldown(); // Start cooldown countdown
+                        checkAdCooldown();
                     })
                     .catch(error => {
+                        // Revert score if fetch fails
+                        scoreElement.textContent = currentScore;
                         console.error('Error processing reward:', error);
                         alert('There was an error processing the reward.');
                     });
-
                 }).catch((result) => {
                     console.error('Ad error:', result);
                     alert('Ad was not completed or an error occurred.');
                 });
             }
         });
-
+    
         // Start the cooldown check on page load
         checkAdCooldown();
-
+    
         // Add styles for popup notification and cooldown
         const style = document.createElement('style');
         style.innerHTML = `
-            /* Popup Notification Style */
             .popup-notification {
                 position: fixed;
                 top: 20%;
@@ -207,8 +212,6 @@
                 opacity: 0;
                 transition: opacity 1s ease-in-out;
             }
-
-            /* Cooldown button style */
             #watch-ads-button.cooldown {
                 background-color: #ccc;
                 color: #666;
@@ -216,7 +219,7 @@
             }
         `;
         document.head.appendChild(style);
-
     </script>
+    
 </body>
 </html>
