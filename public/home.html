@@ -95,6 +95,7 @@
 
     <script src="index.js"></script>
     <script>
+        const userId= localStorage.getItem("userId")
         const rewardUrl = `https://dolphins-ai6u.onrender.com/api/rewards/ads/user/${userId}`;
         // Initialize Adsgram Ad Controller
         const AdController = window.Adsgram.init({ blockId: "5150" });
