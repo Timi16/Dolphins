@@ -20,7 +20,6 @@ function hidePopup() {
     popup.classList.add('hidden');
 }
 
-// Function to claim the daily reward through the API
 async function claimDailyReward(day) {
     const now = Date.now();
 
@@ -44,21 +43,21 @@ async function claimDailyReward(day) {
         const data = await response.json();
 
         if (response.ok) {
-            // Update score and current day
+            // Update score and day based on backend response
             sowls = data.newScore;
-            currentDay = data.nextDay;
+            currentDay = data.nextDay;  // Sync with backend's currentDay
             lastClaimTime = now;
 
-            // Save to local storage
+            // Save values to local storage for consistency
             localStorage.setItem('sowls', sowls);
             localStorage.setItem('currentDay', currentDay);
             localStorage.setItem('lastClaimTime', lastClaimTime);
             localStorage.setItem(`day${day}Claimed`, 'true');
 
-            // Show success popup
+            // Show success popup with correct reward amount
             showPopup(`Congratulations! You've claimed ${dailyRewards[day - 1]} Dolphins!`);
 
-            // Update the UI
+            // Update the UI based on the new day
             updateUI();
         } else {
             showPopup(data.message || 'Error claiming daily reward.');
@@ -71,6 +70,9 @@ async function claimDailyReward(day) {
 
 // Function to update the UI based on the current day
 function updateUI() {
+    // Fetch current day from local storage to ensure correct day is unlocked
+    const storedCurrentDay = parseInt(localStorage.getItem('currentDay')) || 1;
+
     document.querySelectorAll('.reward-card').forEach((card, index) => {
         const day = index + 1;
         const isClaimed = localStorage.getItem(`day${day}Claimed`) === 'true';
@@ -79,8 +81,8 @@ function updateUI() {
         if (isClaimed) {
             card.classList.add('claimed');
             card.style.cursor = 'default';
-        } else if (day === currentDay) {
-            card.classList.add('unlocked');
+        } else if (day === storedCurrentDay) {
+            card.classList.add('unlocked');  // Enable claiming only for current day
             card.style.cursor = 'pointer';
         } else {
             card.classList.add('locked');
