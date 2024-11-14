@@ -150,7 +150,7 @@
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`  // Ensure token is included if needed
+                            'Authorization': token  // Ensure token is included if needed
                         },
                         body: JSON.stringify({ rewardStatus: 'completed' })  // Send the status of the ad
                     })
