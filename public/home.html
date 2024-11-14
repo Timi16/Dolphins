@@ -95,9 +95,7 @@
 
     <script src="index.js"></script>
     <script>
-        const userId = localStorage.getItem("userId"); // Replace with actual user ID logic
         const rewardUrl = `https://dolphins-ai6u.onrender.com/api/rewards/ads/user/${userId}`;
-        const token = localStorage.getItem('token');
         // Initialize Adsgram Ad Controller
         const AdController = window.Adsgram.init({ blockId: "5150" });
         // Select the watch ads button
@@ -142,46 +140,59 @@
                 setTimeout(checkAdCooldown, 1000);
             }
         }
+        async function watchAdAndEarn() {
+            const userId = localStorage.getItem("userId");
+            const token = localStorage.getItem("token");
+
             if (!userId || !token) {
                 alert('User ID or token is missing. Please log in again.');
-                // Redirect to login or handle token issue
-            } else {
-                console.log('Retrieved User ID:', userId);
-                console.log('Retrieved Token:', token);
+                return;
             }
-            watchAdsButton.addEventListener('click', () => {
-                if (Date.now() >= nextAdTime) {
-                    AdController.show().then(() => {
-                        fetch(rewardUrl, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': token // Use Bearer token format
-                            },
-                            body: JSON.stringify({ rewardStatus: 'completed' })
-                        })
-                        .then(response => {
-                            if (!response.ok) throw new Error('Authorization failed');
-                            return response.text();
-                        })
-                        .then(data => {
-                            displayPopup(data);
-                            nextAdTime = Date.now() + cooldownTime;
-                            localStorage.setItem("nextAdTime", nextAdTime);
-                            checkAdCooldown();
-                        })
-                        .catch(error => {
-                            console.error('Error processing reward:', error);
-                            alert('There was an error processing the reward. Please try again.');
-                        });
-                    }).catch((result) => {
-                        console.error('Ad error:', result);
-                        alert('Ad was not completed or an error occurred.');
-                    });
-                }
-            });
 
-        // Start the cooldown check on page load
+            const rewardUrl = `https://dolphins-ai6u.onrender.com/api/rewards/ads/user/${userId}`;
+            const watchAdsButton = document.getElementById('watch-ads-button');
+
+            // Initialize Adsgram Ad Controller
+            const AdController = window.Adsgram.init({ blockId: "5150" });
+
+            try {
+                await AdController.show();
+
+                const response = await fetch(rewardUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': token
+                    },
+                    body: JSON.stringify({ rewardStatus: 'completed' })
+                });
+
+                const result = await response.json();
+
+                // Handle response based on status
+                if (!response.ok) {
+                    throw new Error(result.message || 'Failed to award points');
+                }
+
+                // Display success message and update score
+                displayPopup(result.message); 
+                document.getElementById('score-value').textContent = result.newScore; 
+
+                // Start cooldown timer
+                const cooldownTime = 5 * 60 * 1000; // 5 minutes
+                nextAdTime = Date.now() + cooldownTime;
+                localStorage.setItem("nextAdTime", nextAdTime);
+                checkAdCooldown();
+
+            } catch (error) {
+                console.error('Error during ad viewing and reward process:', error);
+                alert(error.message || 'An error occurred while processing the reward.');
+            }
+        }
+
+        // Attach event listener to watch ads button
+        document.getElementById('watch-ads-button').addEventListener('click', watchAdAndEarn);
+                // Start the cooldown check on page load
         checkAdCooldown();
 
 

@@ -2,25 +2,49 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+
 const authenticateJWT = (req, res, next) => {
-    const authHeader = req.headers['authorization'];
-    console.log('Auth header:', authHeader);
+    try {
+        const authHeader = req.headers['authorization'];
+        
+        // Log the received authorization header for debugging
+        console.log('Auth header:', authHeader);
 
-    if (!authHeader) {
-        return res.status(401).json({ success: false, message: 'Authorization header missing' });
+        if (!authHeader) {
+            return res.status(401).json({ 
+                success: false, 
+                message: 'No authorization header' 
+            });
+        }
+
+        // Handle both "Bearer token" and plain token formats
+        const token = authHeader.startsWith('Bearer ') 
+            ? authHeader.slice(7) 
+            : authHeader;
+
+        // Log the token we're trying to verify
+        console.log('Token to verify:', token);
+
+        // For your case, since you're using a simple token
+        // Instead of JWT verification, just check if token exists
+        if (!token) {
+            return res.status(401).json({ 
+                success: false, 
+                message: 'No token provided' 
+            });
+        }
+
+        // Store the token in request for later use
+        req.token = token;
+        next();
+    } catch (err) {
+        console.error('Auth error:', err);
+        return res.status(401).json({ 
+            success: false, 
+            message: 'Authentication failed' 
+        });
     }
-
-    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
-    console.log('Token to verify:', token);
-
-    if (!token) {
-        return res.status(401).json({ success: false, message: 'Token is missing or invalid' });
-    }
-
-    req.token = token;
-    next();
 };
-
 
 // Update score when a task is completed
 router.post('/complete-task',authenticateJWT, async (req, res) => {
@@ -284,26 +308,34 @@ router.post('/update-game-score',authenticateJWT, async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 });
+
 router.post('/ads/user/:userId', authenticateJWT, async (req, res) => {
     const { userId } = req.params;
+    console.log('Processing ad reward for userId:', userId);
+
     try {
-        // Find the user by userId
         const user = await User.findById(userId);
-        if (!user) return res.status(404).send('User not found');
+        if (!user) {
+            console.error('User not found:', userId);
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
 
-        // Award 100 points for watching an ad
+        // Award points
         user.score += 100;
-
-        // Save the updated user data
         await user.save();
 
-        // Return the updated user data as text instead of JSON
-        return res.send(`Success! ${user.username} has been awarded 100 dolphins. New score: ${user.score} 🐬`);
+        console.log(`Points awarded to ${user.username}, new score: ${user.score}`);
+        return res.json({
+            success: true,
+            message: `Success! ${user.username} has been awarded 100 dolphins.`,
+            newScore: user.score
+        });
     } catch (err) {
-        console.error(err);
-        res.status(500).send('Server error');
+        console.error('Error awarding ad reward:', err);
+        res.status(500).json({ success: false, message: 'Server error', error: err.message });
     }
 });
+
 
 
 module.exports=router;
