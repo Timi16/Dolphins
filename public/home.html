@@ -100,8 +100,7 @@
 
         // Initialize Adsgram Ad Controller
         const AdController = window.Adsgram.init({ blockId: "5150" });
-                // Select necessary elements
-        const scoreDisplay = document.getElementById('score-value');
+        // Select the watch ads button
         const watchAdsButton = document.getElementById('watch-ads-button');
 
         // Define cooldown time (5 minutes in milliseconds)
@@ -110,18 +109,20 @@
 
         // Function to display popup notification
         function displayPopup(message) {
+            // Create popup div
             const popup = document.createElement('div');
             popup.className = 'popup-notification';
             popup.innerText = message;
             document.body.appendChild(popup);
 
+            // Add fade-in and fade-out animation
             popup.style.opacity = '1';
             setTimeout(() => {
                 popup.style.opacity = '0';
                 setTimeout(() => {
-                    popup.remove();
+                    popup.remove(); // Remove popup from DOM after fade-out
                 }, 1000);
-            }, 3000);
+            }, 3000); // Display for 3 seconds
         }
 
         // Timer function to check cooldown and display countdown
@@ -132,13 +133,13 @@
             if (timeLeft <= 0) {
                 watchAdsButton.disabled = false;
                 watchAdsButton.innerText = "+100 dolphins";
-                watchAdsButton.classList.remove('cooldown');
+                watchAdsButton.classList.remove('cooldown'); // Remove cooldown styling
             } else {
                 watchAdsButton.disabled = true;
                 const minutes = Math.floor(timeLeft / 60000);
                 const seconds = Math.floor((timeLeft % 60000) / 1000);
                 watchAdsButton.innerText = `Wait ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-                watchAdsButton.classList.add('cooldown');
+                watchAdsButton.classList.add('cooldown'); // Add cooldown styling
                 setTimeout(checkAdCooldown, 1000);
             }
         }
@@ -154,20 +155,13 @@
                     })
                     .then(response => response.json())
                     .then(data => {
-                        if (data.success) {
-                            // Update score on the UI
-                            scoreDisplay.textContent = data.data.score;
-
-                            // Show popup notification
-                            displayPopup("You have received 100 Points!");
-
-                            // Set cooldown
-                            nextAdTime = Date.now() + cooldownTime;
-                            localStorage.setItem("nextAdTime", nextAdTime);
-                            checkAdCooldown(); // Start cooldown countdown
-                        } else {
-                            console.log('Failed to update score:', data.message);
-                        }
+                        // Show popup notification
+                        displayPopup("You have received 100 Points!");
+                        
+                        // Set cooldown
+                        nextAdTime = Date.now() + cooldownTime;
+                        localStorage.setItem("nextAdTime", nextAdTime);
+                        checkAdCooldown(); // Start cooldown countdown
                     })
                     .catch(error => {
                         console.error('Error processing reward:', error);
@@ -183,7 +177,7 @@
         // Start the cooldown check on page load
         checkAdCooldown();
 
-       // Add styles for popup notification and cooldown
+        // Add styles for popup notification and cooldown
         const style = document.createElement('style');
         style.innerHTML = `
             /* Popup Notification Style */
