@@ -318,7 +318,7 @@ router.get('/ads/user/:userId', authenticateJWT, async (req, res) => {
         if (!user) return res.status(404).json({ message: 'User not found' });
 
         // Award 1000 points for watching an ad
-        user.score += 1000;
+        user.score += 100;
 
         // Save the updated user data
         await user.save();
@@ -330,7 +330,7 @@ router.get('/ads/user/:userId', authenticateJWT, async (req, res) => {
                 userId: user._id,
                 username: user.username,
                 score: user.score,
-                message: '1000 points awarded for watching ad'
+                message: '100 points awarded for watching ad'
             }
         });
     } catch (err) {
