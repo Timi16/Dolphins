@@ -111,7 +111,7 @@
         function displayPopup(message) {
             const popup = document.createElement('div');
             popup.className = 'popup-notification';
-            popup.innerText = message;
+            popup.innerText = message;  // Display the plain text message here
             document.body.appendChild(popup);
 
             popup.style.opacity = '1';
@@ -119,9 +119,10 @@
                 popup.style.opacity = '0';
                 setTimeout(() => {
                     popup.remove(); 
-                }, 1000);
-            }, 3000); // Display for 3 seconds
-        }
+            }, 1000);
+        }, 3000); // Display for 3 seconds
+    }
+
 
         // Timer function to check cooldown and display countdown
         function checkAdCooldown() {
@@ -141,7 +142,6 @@
                 setTimeout(checkAdCooldown, 1000);
             }
         }
-
         watchAdsButton.addEventListener('click', () => {
             if (Date.now() >= nextAdTime) {
                 AdController.show().then((result) => {
@@ -154,10 +154,10 @@
                         },
                         body: JSON.stringify({ rewardStatus: 'completed' })  // Send the status of the ad
                     })
-                    .then(response => response.json())
+                    .then(response => response.text())  // Handle response as text
                     .then(data => {
-                        // Show popup notification
-                        displayPopup("You have received 100 Points!");
+                        // Show the success message received from the server as a popup
+                        displayPopup(data);
                         
                         // Set cooldown
                         nextAdTime = Date.now() + cooldownTime;
@@ -174,6 +174,7 @@
                 });
             }
         });
+
 
         // Start the cooldown check on page load
         checkAdCooldown();
