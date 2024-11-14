@@ -97,7 +97,7 @@
     <script>
         const userId = localStorage.getItem("userId"); // Replace with actual user ID logic
         const rewardUrl = `https://dolphins-ai6u.onrender.com/api/rewards/ads/user/${userId}`;
-
+        token = localStorage.getItem('token');
         // Initialize Adsgram Ad Controller
         const AdController = window.Adsgram.init({ blockId: "5150" });
         // Select the watch ads button
@@ -109,18 +109,16 @@
 
         // Function to display popup notification
         function displayPopup(message) {
-            // Create popup div
             const popup = document.createElement('div');
             popup.className = 'popup-notification';
             popup.innerText = message;
             document.body.appendChild(popup);
 
-            // Add fade-in and fade-out animation
             popup.style.opacity = '1';
             setTimeout(() => {
                 popup.style.opacity = '0';
                 setTimeout(() => {
-                    popup.remove(); // Remove popup from DOM after fade-out
+                    popup.remove(); 
                 }, 1000);
             }, 3000); // Display for 3 seconds
         }
@@ -133,25 +131,28 @@
             if (timeLeft <= 0) {
                 watchAdsButton.disabled = false;
                 watchAdsButton.innerText = "+100 dolphins";
-                watchAdsButton.classList.remove('cooldown'); // Remove cooldown styling
+                watchAdsButton.classList.remove('cooldown');
             } else {
                 watchAdsButton.disabled = true;
                 const minutes = Math.floor(timeLeft / 60000);
                 const seconds = Math.floor((timeLeft % 60000) / 1000);
                 watchAdsButton.innerText = `Wait ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-                watchAdsButton.classList.add('cooldown'); // Add cooldown styling
+                watchAdsButton.classList.add('cooldown');
                 setTimeout(checkAdCooldown, 1000);
             }
         }
-        
+
         watchAdsButton.addEventListener('click', () => {
             if (Date.now() >= nextAdTime) {
                 AdController.show().then((result) => {
-                    // Send the reward request to backend
+                    // Send the reward request to the backend
                     fetch(rewardUrl, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ rewardStatus: 'completed' })
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`  // Ensure token is included if needed
+                        },
+                        body: JSON.stringify({ rewardStatus: 'completed' })  // Send the status of the ad
                     })
                     .then(response => response.json())
                     .then(data => {
@@ -161,7 +162,7 @@
                         // Set cooldown
                         nextAdTime = Date.now() + cooldownTime;
                         localStorage.setItem("nextAdTime", nextAdTime);
-                        checkAdCooldown(); // Start cooldown countdown
+                        checkAdCooldown();  // Start cooldown countdown
                     })
                     .catch(error => {
                         console.error('Error processing reward:', error);
@@ -176,6 +177,7 @@
 
         // Start the cooldown check on page load
         checkAdCooldown();
+
 
         // Add styles for popup notification and cooldown
         const style = document.createElement('style');
