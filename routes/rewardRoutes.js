@@ -311,21 +311,19 @@ router.post('/update-game-score',authenticateJWT, async (req, res) => {
 
 router.post('/ads/user/:userId', authenticateJWT, async (req, res) => {
     const { userId } = req.params;
-    
+
     try {
         // Find the user by userId
         const user = await User.findById(userId);
         if (!user) return res.status(404).json({ message: 'User not found' });
-        
-        // Ensure score is treated as a number
-        user.score = (Number(user.score) || 0) + 100;
-        
+
+        // Award 1000 points for watching an ad
+        user.score += 100;
+
         // Save the updated user data
         await user.save();
-        
-        // Log the score to verify it's working
-        console.log('Updated score:', user.score);
-        
+
+        // Return the updated user data
         return res.json({
             success: true,
             data: {
