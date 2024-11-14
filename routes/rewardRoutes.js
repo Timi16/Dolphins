@@ -325,11 +325,13 @@ router.post('/ads/user/:userId', authenticateJWT, async (req, res) => {
 
         // Return the updated user data
         return res.json({
-            userId: user._id,
-            username: user.username,
-            newScore: user.score,
-            message: '100 points awarded for watching ad'
-    
+            success: true,
+            data: {
+                userId: user._id,
+                username: user.username,
+                score: user.score,
+                message: '100 points awarded for watching ad'
+            }
         });
     } catch (err) {
         console.error(err);
