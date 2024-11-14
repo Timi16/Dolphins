@@ -95,7 +95,7 @@
 
     <script src="index.js"></script>
     <script>
-         const userId = localStorage.getItem("userId");
+        const userId = localStorage.getItem("userId");
         const token = localStorage.getItem("token");
         const rewardUrl = `https://dolphins-ai6u.onrender.com/api/rewards/ads/user/${userId}`;
         const scoreElement = document.getElementById('score-value');
@@ -158,7 +158,7 @@
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`  // Adding 'Bearer ' prefix
+                            'Authorization': token  // Adding 'Bearer ' prefix
                         },
                         body: JSON.stringify({ newScore })  // Send newScore in the request body
                     })
