@@ -98,7 +98,8 @@
         const rewardUrl = `https://dolphins-ai6u.onrender.com/api/rewards/ads/user/${userId}`;
         // Initialize Adsgram Ad Controller
         const AdController = window.Adsgram.init({ blockId: "5150" });
-        // Select the watch ads button
+
+        // Get the watch ads button
         const watchAdsButton = document.getElementById('watch-ads-button');
 
         // Define cooldown time (5 minutes in milliseconds)
@@ -107,20 +108,21 @@
 
         // Function to display popup notification
         function displayPopup(message) {
+            // Create popup div
             const popup = document.createElement('div');
             popup.className = 'popup-notification';
-            popup.innerText = message;  // Display the plain text message here
+            popup.innerText = message;
             document.body.appendChild(popup);
 
+            // Add fade-in and fade-out animation
             popup.style.opacity = '1';
             setTimeout(() => {
                 popup.style.opacity = '0';
                 setTimeout(() => {
-                    popup.remove(); 
-            }, 1000);
-        }, 3000); // Display for 3 seconds
-    }
-
+                    popup.remove(); // Remove popup from DOM after fade-out
+                }, 1000);
+            }, 3000); // Display for 3 seconds
+        }
 
         // Timer function to check cooldown and display countdown
         function checkAdCooldown() {
@@ -130,72 +132,49 @@
             if (timeLeft <= 0) {
                 watchAdsButton.disabled = false;
                 watchAdsButton.innerText = "+100 dolphins";
-                watchAdsButton.classList.remove('cooldown');
+                watchAdsButton.classList.remove('cooldown'); // Remove cooldown styling
             } else {
                 watchAdsButton.disabled = true;
                 const minutes = Math.floor(timeLeft / 60000);
                 const seconds = Math.floor((timeLeft % 60000) / 1000);
                 watchAdsButton.innerText = `Wait ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-                watchAdsButton.classList.add('cooldown');
+                watchAdsButton.classList.add('cooldown'); // Add cooldown styling
                 setTimeout(checkAdCooldown, 1000);
             }
         }
-        async function watchAdAndEarn() {
-            const userId = localStorage.getItem("userId");
-            const token = localStorage.getItem("token");
 
-            if (!userId || !token) {
-                alert('User ID or token is missing. Please log in again.');
-                return;
-            }
-
-            const rewardUrl = `https://dolphins-ai6u.onrender.com/api/rewards/ads/user/${userId}`;
-            const watchAdsButton = document.getElementById('watch-ads-button');
-
-            // Initialize Adsgram Ad Controller
-            const AdController = window.Adsgram.init({ blockId: "5150" });
-
-            // Show ad and handle reward logic
-            try {
-                await AdController.show();
-
-                // Make request to backend for reward points
-                const response = await fetch(rewardUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': token
-                    },
-                    body: JSON.stringify({ rewardStatus: 'completed' })
+        watchAdsButton.addEventListener('click', () => {
+            if (Date.now() >= nextAdTime) {
+                AdController.show().then((result) => {
+                    // Send the reward request to backend
+                    fetch(rewardUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ rewardStatus: 'completed' })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        // Show popup notification
+                        displayPopup("You have received 100 Points!");
+                        
+                        // Set cooldown
+                        nextAdTime = Date.now() + cooldownTime;
+                        localStorage.setItem("nextAdTime", nextAdTime);
+                        checkAdCooldown(); // Start cooldown countdown
+                    })
+                    .catch(error => {
+                        console.error('Error processing reward:', error);
+                        alert('There was an error processing the reward.');
+                    });
+                }).catch((result) => {
+                    console.error('Ad error:', result);
+                    alert('Ad was not completed or an error occurred.');
                 });
-
-                // Handle response based on status
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`Failed to award points: ${errorText}`);
-                }
-
-                // Parse response and handle success
-                const result = await response.text();
-                displayPopup(result); // Display success popup with server message
-
-                // Start cooldown timer
-                const cooldownTime = 5 * 60 * 1000; // 5 minutes
-                nextAdTime = Date.now() + cooldownTime;
-                localStorage.setItem("nextAdTime", nextAdTime);
-                checkAdCooldown();
-
-            } catch (error) {
-                console.error('Error during ad viewing and reward process:', error);
-                alert(error.message || 'An error occurred while processing the reward.');
             }
-        }
+        });
 
-        // Attach event listener to watch ads button
-        document.getElementById('watch-ads-button').addEventListener('click', watchAdAndEarn);
-            // Start the cooldown check on page load
+        // Start the cooldown check on page load
         checkAdCooldown();
-
 
         // Add styles for popup notification and cooldown
         const style = document.createElement('style');

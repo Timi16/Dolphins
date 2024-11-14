@@ -308,6 +308,7 @@ router.post('/update-game-score',authenticateJWT, async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 });
+
 router.post('/ads/user/:userId', authenticateJWT, async (req, res) => {
     const { userId } = req.params;
     try {
