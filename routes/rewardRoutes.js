@@ -2,49 +2,25 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
-
 const authenticateJWT = (req, res, next) => {
-    try {
-        const authHeader = req.headers['authorization'];
-        
-        // Log the received authorization header for debugging
-        console.log('Auth header:', authHeader);
+    const authHeader = req.headers['authorization'];
+    console.log('Auth header:', authHeader);
 
-        if (!authHeader) {
-            return res.status(401).json({ 
-                success: false, 
-                message: 'No authorization header' 
-            });
-        }
-
-        // Handle both "Bearer token" and plain token formats
-        const token = authHeader.startsWith('Bearer ') 
-            ? authHeader.slice(7) 
-            : authHeader;
-
-        // Log the token we're trying to verify
-        console.log('Token to verify:', token);
-
-        // For your case, since you're using a simple token
-        // Instead of JWT verification, just check if token exists
-        if (!token) {
-            return res.status(401).json({ 
-                success: false, 
-                message: 'No token provided' 
-            });
-        }
-
-        // Store the token in request for later use
-        req.token = token;
-        next();
-    } catch (err) {
-        console.error('Auth error:', err);
-        return res.status(401).json({ 
-            success: false, 
-            message: 'Authentication failed' 
-        });
+    if (!authHeader) {
+        return res.status(401).json({ success: false, message: 'Authorization header missing' });
     }
+
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
+    console.log('Token to verify:', token);
+
+    if (!token) {
+        return res.status(401).json({ success: false, message: 'Token is missing or invalid' });
+    }
+
+    req.token = token;
+    next();
 };
+
 
 // Update score when a task is completed
 router.post('/complete-task',authenticateJWT, async (req, res) => {
