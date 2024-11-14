@@ -309,7 +309,7 @@ router.post('/update-game-score',authenticateJWT, async (req, res) => {
     }
 });
 
-router.get('/ads/user/:userId', authenticateJWT, async (req, res) => {
+router.post('/ads/user/:userId', authenticateJWT, async (req, res) => {
     const { userId } = req.params;
 
     try {

@@ -100,35 +100,113 @@
 
         // Initialize Adsgram Ad Controller
         const AdController = window.Adsgram.init({ blockId: "5150" });
-
-        // Get the watch ads button
+        // Select the watch ads button
         const watchAdsButton = document.getElementById('watch-ads-button');
 
+        // Define cooldown time (5 minutes in milliseconds)
+        const cooldownTime = 5 * 60 * 1000;
+        let nextAdTime = localStorage.getItem("nextAdTime") || 0;
+
+        // Function to display popup notification
+        function displayPopup(message) {
+            // Create popup div
+            const popup = document.createElement('div');
+            popup.className = 'popup-notification';
+            popup.innerText = message;
+            document.body.appendChild(popup);
+
+            // Add fade-in and fade-out animation
+            popup.style.opacity = '1';
+            setTimeout(() => {
+                popup.style.opacity = '0';
+                setTimeout(() => {
+                    popup.remove(); // Remove popup from DOM after fade-out
+                }, 1000);
+            }, 3000); // Display for 3 seconds
+        }
+
+        // Timer function to check cooldown and display countdown
+        function checkAdCooldown() {
+            const now = Date.now();
+            const timeLeft = nextAdTime - now;
+
+            if (timeLeft <= 0) {
+                watchAdsButton.disabled = false;
+                watchAdsButton.innerText = "+100 dolphins";
+                watchAdsButton.classList.remove('cooldown'); // Remove cooldown styling
+            } else {
+                watchAdsButton.disabled = true;
+                const minutes = Math.floor(timeLeft / 60000);
+                const seconds = Math.floor((timeLeft % 60000) / 1000);
+                watchAdsButton.innerText = `Wait ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+                watchAdsButton.classList.add('cooldown'); // Add cooldown styling
+                setTimeout(checkAdCooldown, 1000);
+            }
+        }
+
         watchAdsButton.addEventListener('click', () => {
-            AdController.show().then((result) => {
-                // If the user completes watching the ad, send reward request to backend
-                fetch(rewardUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ rewardStatus: 'completed' }) // Adjust payload as required
-                })
-                .then(response => response.json())
-                .then(data => {
-                    alert('Reward granted!');
-                    console.log('Reward response:', data);
-                })
-                .catch(error => {
-                    console.error('Error processing reward:', error);
-                    alert('There was an error processing the reward.');
+            if (Date.now() >= nextAdTime) {
+                AdController.show().then((result) => {
+                    // Send the reward request to backend
+                    fetch(rewardUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ rewardStatus: 'completed' })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        // Show popup notification
+                        displayPopup("You have received 100 Points!");
+                        
+                        // Set cooldown
+                        nextAdTime = Date.now() + cooldownTime;
+                        localStorage.setItem("nextAdTime", nextAdTime);
+                        checkAdCooldown(); // Start cooldown countdown
+                    })
+                    .catch(error => {
+                        console.error('Error processing reward:', error);
+                        alert('There was an error processing the reward.');
+                    });
+                }).catch((result) => {
+                    console.error('Ad error:', result);
+                    alert('Ad was not completed or an error occurred.');
                 });
-            }).catch((result) => {
-                // Handle cases where the ad is skipped or an error occurs
-                alert('Ad was not completed or an error occurred.');
-                console.error('Ad error:', result);
-            });
+            }
         });
+
+        // Start the cooldown check on page load
+        checkAdCooldown();
+
+        // Add styles for popup notification and cooldown
+        const style = document.createElement('style');
+        style.innerHTML = `
+            /* Popup Notification Style */
+            .popup-notification {
+                position: fixed;
+                top: 20%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background-color: #4CAF50;
+                color: white;
+                padding: 20px;
+                border-radius: 10px;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+                font-size: 1.2em;
+                text-align: center;
+                z-index: 1000;
+                opacity: 0;
+                transition: opacity 1s ease-in-out;
+            }
+
+            /* Cooldown button style */
+            #watch-ads-button.cooldown {
+                background-color: #ccc;
+                color: #666;
+                cursor: not-allowed;
+            }
+        `;
+        document.head.appendChild(style);
+
     </script>
 </body>
 </html>
