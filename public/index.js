@@ -225,10 +225,6 @@ function earnReward(task, amount) {
             buttonId = 'subscribe-mouse-button';
             completedText = 'Subscribed';
             break;
-        case 'watch_ads':
-            buttonId = 'watch-ads-button';
-            completedText = 'Watched';
-            break;
         case 'like-button' :
             buttonId = 'like-button';
             completedText = 'Subscribed';
