@@ -1,10 +1,9 @@
-// Get initial values from local storage or set defaults
 let sowls = parseInt(localStorage.getItem('sowls')) || 0;
 let currentDay = parseInt(localStorage.getItem('currentDay')) || 1;
-let lastClaimTime = parseInt(localStorage.getItem('lastClaimTime')) || 0;
+let lastClaimDate = localStorage.getItem('lastClaimDate') || "";
 
 // Array of daily rewards
-const dailyRewards = [500, 1500, 2500, 3500, 5000, 7000, 8000, 9000, 10000];
+const dailyRewards = [50, 100, 150, 200, 250, 300, 350, 400, 500];
 
 // Function to show popup message
 function showPopup(message) {
@@ -20,12 +19,19 @@ function hidePopup() {
     popup.classList.add('hidden');
 }
 
-async function claimDailyReward(day) {
-    const now = Date.now();
+// Function to get today's UTC date in YYYY-MM-DD format
+function getCurrentUtcDate() {
+    const now = new Date();
+    return now.toISOString().split('T')[0]; // Returns YYYY-MM-DD
+}
 
-    // Check if 24 hours have passed since the last claim
-    if (now - lastClaimTime < 24 * 60 * 60 * 1000) {
-        showPopup('You can only claim the reward once every 24 hours.');
+// Function to claim daily reward
+async function claimDailyReward(day) {
+    const currentUtcDate = getCurrentUtcDate(); // Get current UTC date
+
+    // Check if the user has already claimed the reward today
+    if (currentUtcDate === lastClaimDate) {
+        showPopup('You have already claimed today\'s reward!');
         return;
     }
 
@@ -46,12 +52,12 @@ async function claimDailyReward(day) {
             // Update score and day based on backend response
             sowls = data.newScore;
             currentDay = data.nextDay;  // Sync with backend's currentDay
-            lastClaimTime = now;
+            lastClaimDate = currentUtcDate; // Update last claim date to current UTC date
 
             // Save values to local storage for consistency
             localStorage.setItem('sowls', sowls);
             localStorage.setItem('currentDay', currentDay);
-            localStorage.setItem('lastClaimTime', lastClaimTime);
+            localStorage.setItem('lastClaimDate', lastClaimDate);
             localStorage.setItem(`day${day}Claimed`, 'true');
 
             // Show success popup with correct reward amount
@@ -117,4 +123,3 @@ document.getElementById('popup-overlay').addEventListener('click', (e) => {
 
 // Initialize the UI
 updateUI();
-
