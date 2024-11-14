@@ -142,39 +142,44 @@
                 setTimeout(checkAdCooldown, 1000);
             }
         }
-        watchAdsButton.addEventListener('click', () => {
-            if (Date.now() >= nextAdTime) {
-                AdController.show().then((result) => {
-                    // Send the reward request to the backend
-                    fetch(rewardUrl, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': token  // Ensure token is included if needed
-                        },
-                        body: JSON.stringify({ rewardStatus: 'completed' })  // Send the status of the ad
-                    })
-                    .then(response => response.text())  // Handle response as text
-                    .then(data => {
-                        // Show the success message received from the server as a popup
-                        displayPopup(data);
-                        
-                        // Set cooldown
-                        nextAdTime = Date.now() + cooldownTime;
-                        localStorage.setItem("nextAdTime", nextAdTime);
-                        checkAdCooldown();  // Start cooldown countdown
-                    })
-                    .catch(error => {
-                        console.error('Error processing reward:', error);
-                        alert('There was an error processing the reward.');
-                    });
-                }).catch((result) => {
-                    console.error('Ad error:', result);
-                    alert('Ad was not completed or an error occurred.');
-                });
+            if (!userId || !token) {
+                alert('User ID or token is missing. Please log in again.');
+                // Redirect to login or handle token issue
+            } else {
+                console.log('Retrieved User ID:', userId);
+                console.log('Retrieved Token:', token);
             }
-        });
-
+            watchAdsButton.addEventListener('click', () => {
+                if (Date.now() >= nextAdTime) {
+                    AdController.show().then(() => {
+                        fetch(rewardUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}` // Use Bearer token format
+                            },
+                            body: JSON.stringify({ rewardStatus: 'completed' })
+                        })
+                        .then(response => {
+                            if (!response.ok) throw new Error('Authorization failed');
+                            return response.text();
+                        })
+                        .then(data => {
+                            displayPopup(data);
+                            nextAdTime = Date.now() + cooldownTime;
+                            localStorage.setItem("nextAdTime", nextAdTime);
+                            checkAdCooldown();
+                        })
+                        .catch(error => {
+                            console.error('Error processing reward:', error);
+                            alert('There was an error processing the reward. Please try again.');
+                        });
+                    }).catch((result) => {
+                        console.error('Ad error:', result);
+                        alert('Ad was not completed or an error occurred.');
+                    });
+                }
+            });
 
         // Start the cooldown check on page load
         checkAdCooldown();
