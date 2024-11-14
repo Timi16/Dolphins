@@ -155,9 +155,11 @@
             // Initialize Adsgram Ad Controller
             const AdController = window.Adsgram.init({ blockId: "5150" });
 
+            // Show ad and handle reward logic
             try {
                 await AdController.show();
 
+                // Make request to backend for reward points
                 const response = await fetch(rewardUrl, {
                     method: 'POST',
                     headers: {
@@ -167,16 +169,15 @@
                     body: JSON.stringify({ rewardStatus: 'completed' })
                 });
 
-                const result = await response.json();
-
                 // Handle response based on status
                 if (!response.ok) {
-                    throw new Error(result.message || 'Failed to award points');
+                    const errorText = await response.text();
+                    throw new Error(`Failed to award points: ${errorText}`);
                 }
 
-                // Display success message and update score
-                displayPopup(result.message); 
-                document.getElementById('score-value').textContent = result.newScore; 
+                // Parse response and handle success
+                const result = await response.text();
+                displayPopup(result); // Display success popup with server message
 
                 // Start cooldown timer
                 const cooldownTime = 5 * 60 * 1000; // 5 minutes
@@ -192,7 +193,7 @@
 
         // Attach event listener to watch ads button
         document.getElementById('watch-ads-button').addEventListener('click', watchAdAndEarn);
-                // Start the cooldown check on page load
+            // Start the cooldown check on page load
         checkAdCooldown();
 
 
