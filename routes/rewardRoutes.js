@@ -309,9 +309,8 @@ router.post('/update-game-score',authenticateJWT, async (req, res) => {
     }
 });
 
-router.post('/ads/user/:userId', authenticateJWT, async (req, res) => {
+router.post('/ads/user/:userId',async (req, res) => {
     const { userId } = req.params;
-
     try {
         // Find the user by userId
         const user = await User.findById(userId);
