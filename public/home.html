@@ -142,7 +142,7 @@
                 setTimeout(checkAdCooldown, 1000);
             }
         }
-
+        const token = localStorage.getItem("token");
         watchAdsButton.addEventListener('click', () => {
             if (Date.now() >= nextAdTime) {
                 AdController.show().then((result) => {
@@ -150,6 +150,7 @@
                     fetch(rewardUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
+                        'Authorization': token,
                         body: JSON.stringify({ rewardStatus: 'completed' })
                     })
                     .then(response => response.json())
