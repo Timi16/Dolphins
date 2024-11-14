@@ -99,7 +99,7 @@
         const rewardUrl = `https://dolphins-ai6u.onrender.com/api/rewards/ads/user/${userId}`;
         // Initialize Adsgram Ad Controller
         const AdController = window.Adsgram.init({ blockId: "5150" });
-
+        const scoreElement = document.getElementById('score-value');
         // Get the watch ads button
         const watchAdsButton = document.getElementById('watch-ads-button');
 
@@ -146,20 +146,28 @@
         const token = localStorage.getItem("token");
         watchAdsButton.addEventListener('click', () => {
             if (Date.now() >= nextAdTime) {
-                AdController.show().then((result) => {
+                AdController.show().then(() => {
+
+                    // Immediately add 100 points to the displayed score
+                    const currentScore = parseInt(scoreElement.textContent) || 0;
+                    scoreElement.textContent = currentScore + 100;
+                    displayPopup("You've earned 100 dolphins! 🐬");
+
                     // Send the reward request to backend
                     fetch(rewardUrl, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        'Authorization': token,
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': token
+                        },
                         body: JSON.stringify({ rewardStatus: 'completed' })
                     })
                     .then(response => response.json())
                     .then(data => {
-                        // Show popup notification
-                        displayPopup("You have received 100 Points!");
+                        // Display backend message or update score with backend-confirmed value
+                        displayPopup(data.message || "You have received 100 Points!");
                         
-                        // Set cooldown
+                        // Set cooldown time
                         nextAdTime = Date.now() + cooldownTime;
                         localStorage.setItem("nextAdTime", nextAdTime);
                         checkAdCooldown(); // Start cooldown countdown
@@ -168,6 +176,7 @@
                         console.error('Error processing reward:', error);
                         alert('There was an error processing the reward.');
                     });
+
                 }).catch((result) => {
                     console.error('Ad error:', result);
                     alert('Ad was not completed or an error occurred.');
