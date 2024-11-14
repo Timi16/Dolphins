@@ -69,9 +69,6 @@ router.post('/complete-task',authenticateJWT, async (req, res) => {
     }
 });
 
-// Get daily reward
-const dailyRewards = [500, 1500, 2500, 3500, 5000, 7000, 8000, 9000, 10000];
-
 // Modify /daily-reward endpoint
 router.post('/daily-reward', authenticateJWT, async (req, res) => {
     const { username } = req.body;
