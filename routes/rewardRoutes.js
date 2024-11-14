@@ -309,32 +309,30 @@ router.post('/update-game-score',authenticateJWT, async (req, res) => {
     }
 });
 
-router.post('/ads/user/:userId',async (req, res) => {
+router.post('/ads/user/:userId', async (req, res) => {
     const { userId } = req.params;
+    const { newScore } = req.body;  // Retrieve newScore from the request body
+
     try {
-        // Find the user by userId
         const user = await User.findById(userId);
-        if (!user) return res.status(404).json({ message: 'User not found' });
+        if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
-        // Award 1000 points for watching an ad
-        user.score += 100;
-
-        // Save the updated user data
+        // Update the user's score to the newScore provided in the request
+        user.score = newScore;
         await user.save();
 
-        // Return the updated user data
         return res.json({
             success: true,
             data: {
                 userId: user._id,
                 username: user.username,
                 score: user.score,
-                message: '100 points awarded for watching ad'
+                message: 'Score updated successfully!'
             }
         });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Server error' });
+        console.error('Error updating score:', err);
+        res.status(500).json({ success: false, message: 'Server error', error: err.message });
     }
 });
 
