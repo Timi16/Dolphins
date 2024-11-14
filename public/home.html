@@ -157,9 +157,7 @@
                     .then(data => {
                         // Show popup notification
                         displayPopup("You have received 100 Points!");
-                         // Update score display in the frontend
-                        document.getElementById("score-value").innerText = data.data.score;
-
+                        
                         // Set cooldown
                         nextAdTime = Date.now() + cooldownTime;
                         localStorage.setItem("nextAdTime", nextAdTime);
