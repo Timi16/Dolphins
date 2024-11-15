@@ -257,7 +257,7 @@ async function saveGameScore(gameScore) {
   }
 
   try {
-    const response = await fetch('https://dolphins-coin.onrender.com/api/rewards/update-game-score', {
+    const response = await fetch('https://dolphins-ai6u.onrender.com/api/rewards/update-game-score', {
       method: 'POST',
       headers: {
         'Authorization': token,
