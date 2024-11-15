@@ -143,7 +143,6 @@
                 setTimeout(checkAdCooldown, 1000);
             }
         }
-
         watchAdsButton.addEventListener('click', () => {
             if (Date.now() >= nextAdTime) {
                 AdController.show().then((result) => {
