@@ -20,7 +20,7 @@ function handleInviteCode(inviteCode) {
         return;
     }
 
-    fetch(`https://dolphins-ai6u.onrender.com/api/rewards/referral/${inviteCode}`, {
+    fetch(`https://dolphins-coin.onrender.com/api/rewards/referral/${inviteCode}`, {
         method: 'POST',
         headers: {
             'Authorization': token,
@@ -56,7 +56,7 @@ function generateInviteLink() {
     const user = checkUserLoggedIn();
     if (!user) return;
 
-    fetch(`https://dolphins-ai6u.onrender.com/api/rewards/generate-invite/${user.username}`, {
+    fetch(`https://dolphins-coin.onrender.com/api/rewards/generate-invite/${user.username}`, {
         method: 'GET',
         headers: {
             'Authorization': user.token,
@@ -144,7 +144,7 @@ function displayInvitedFriends() {
         return;
     }
 
-    fetch(`https://dolphins-ai6u.onrender.com/api/rewards/referrals/${username}`, {
+    fetch(`https://dolphins-coin.onrender.com/api/rewards/referrals/${username}`, {
         method: 'GET',
         headers: {
             'Authorization': token,

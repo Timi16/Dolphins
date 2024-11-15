@@ -6,7 +6,7 @@ function fetchUserScore(username, token) {
         return Promise.reject(new Error('Missing credentials'));
     }
 
-    return fetch(`https://dolphins-ai6u.onrender.com/api/rewards/user/${username}`, {
+    return fetch(`https://dolphins-coin.onrender.com/api/rewards/user/${username}`, {
         method: 'GET',
         headers: {
             // Send the token directly since we're using a simple token system
@@ -173,7 +173,7 @@ function updateButtonState(buttonId, isCompleted, buttonText) {
 function getDailyReward() {
     const username = localStorage.getItem('username');
     const token = localStorage.getItem('token');
-    fetch('https://dolphins-ai6u.onrender.com/api/rewards/daily-reward', {
+    fetch('https://dolphins-coin.onrender.com/api/rewards/daily-reward', {
         method: 'POST',
         headers: {
             'Authorization': token,
@@ -241,7 +241,7 @@ function earnReward(task, amount) {
         saveButtonState(buttonId, 'processing', 'Processing...');
     }
 
-    fetch('https://dolphins-ai6u.onrender.com/api/rewards/complete-task', {
+    fetch('https://dolphins-coin.onrender.com/api/rewards/complete-task', {
         method: 'POST',
         headers: {
             'Authorization': token,
@@ -334,7 +334,7 @@ function generateInviteLink() {
     const user = checkUserLoggedIn();
     if (!user) return;
 
-    fetch(`https://dolphins-ai6u.onrender.com/api/rewards/generate-invite/${user.username}`, {
+    fetch(`https://dolphins-coin.onrender.com/api/rewards/generate-invite/${user.username}`, {
         method: 'GET',
         headers: {
             'Authorization': user.token,
@@ -372,7 +372,7 @@ function trackReferral(inviteCode) {
     const user = checkUserLoggedIn();
     if (!user) return;
 
-    fetch(`https://dolphins-ai6u.onrender.com/api/rewards/referral/${inviteCode}`, {
+    fetch(`https://dolphins-coin.onrender.com/api/rewards/referral/${inviteCode}`, {
         method: 'POST',
         headers: {
             'Authorization': user.token,
@@ -403,7 +403,7 @@ function trackReferralStatus(targetReferrals, rewardAmount) {
 
     const buttonId = `track-referral-button-${targetReferrals}`;
 
-    fetch(`https://dolphins-ai6u.onrender.com/api/rewards/referrals/${user.username}`, {
+    fetch(`https://dolphins-coin.onrender.com/api/rewards/referrals/${user.username}`, {
         method: 'GET',
         headers: {
             'Authorization': user.token,

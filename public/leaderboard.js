@@ -18,7 +18,7 @@ window.onload = function() {
     }
 
     // Fetch user data for the highlighted section
-    fetch(`https://dolphins-ai6u.onrender.com/api/rewards/user/${username}`, {
+    fetch(`https://dolphins-coin.onrender.com/api/rewards/user/${username}`, {
         method: 'GET',
         headers: {
             'Authorization': token,
@@ -64,7 +64,7 @@ window.onload = function() {
     
 
     // Fetch the leaderboard data
-    fetch('https://dolphins-ai6u.onrender.com/api/rewards/leaderboard', {
+    fetch('https://dolphins-coin.onrender.com/api/rewards/leaderboard', {
         method: 'GET',
         headers: {
             'Authorization': token,
@@ -96,7 +96,7 @@ window.onload = function() {
     });
 
     // Fetch the holders count
-    fetch('https://dolphins-ai6u.onrender.com/api/rewards/holdersCount', {
+    fetch('https://dolphins-coin.onrender.com/api/rewards/holdersCount', {
         method: 'GET',
         headers: {
             'Authorization': token,

@@ -42,7 +42,7 @@ async function claimDailyReward(day) {
         console.log(token);
         
         // Send request to backend to claim daily reward
-        const response = await fetch('https://dolphins-ai6u.onrender.com/api/rewards/daily-reward', {
+        const response = await fetch('https://dolphins-coin.onrender.com/api/rewards/daily-reward', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
