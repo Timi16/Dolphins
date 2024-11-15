@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Registration</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
     <div class="container">
@@ -12,25 +13,60 @@
             <h2>Enter Username</h2>
             <form id="registrationForm">
                 <input type="text" id="username" placeholder="Username" required>
-                <button type="button" id="submitButton">Continue</button>
+                <button type="submit">Continue</button>
             </form>
         </div>
     </div>
 
     <script>
-        document.getElementById('submitButton').addEventListener('click', async function(event) {
+        // Initialize Telegram WebApp
+        const tg = window.Telegram.WebApp;
+
+        window.onload = function() {
+            // Check if both token and username exist in localStorage
+            const token = localStorage.getItem('token');
+            const username = localStorage.getItem('username');
+            
+            if (token && username) {
+                // Redirect to home.html if user is already logged in
+                window.location.href = 'loading.html';
+            }
+
+            // Check for invite code from Telegram parameters
+            if (tg.initDataUnsafe && tg.initDataUnsafe.start_param) {
+                const inviteCode = tg.initDataUnsafe.start_param;
+                localStorage.setItem('pendingInviteCode', inviteCode);
+            }
+
+            // Check for direct inviteCode in URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlInviteCode = urlParams.get('inviteCode');
+            if (urlInviteCode && !localStorage.getItem('pendingInviteCode')) {
+                localStorage.setItem('pendingInviteCode', urlInviteCode);
+            }
+
+            // Debug log to check invite code
+            console.log('Stored invite code:', localStorage.getItem('pendingInviteCode'));
+        };
+
+        document.getElementById('registrationForm').addEventListener('submit', async function(event) {
             event.preventDefault();
 
             const username = document.getElementById('username').value.trim();
             if (username === "") {
-                alert('Please enter a username');
+                if (tg.initDataUnsafe) {
+                    tg.showPopup({
+                        title: 'Error',
+                        message: 'Please enter a username'
+                    });
+                }
                 return;
             }
 
-            // Get the stored invite code from localStorage, if it exists
+            // Get the stored invite code if it exists
             const inviteCode = localStorage.getItem('pendingInviteCode');
             console.log('Processing registration with invite code:', inviteCode);
-
+            
             // Prepare request body
             const requestBody = { username };
             if (inviteCode) {
@@ -48,14 +84,14 @@
 
                 const data = await response.json();
                 console.log('Registration response:', data);
-
+                
                 if (data.token && data.userId) {
                     // Store user data
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('username', username);
                     localStorage.setItem('userId', data.userId);
                     localStorage.setItem('completedTasks', JSON.stringify({}));
-
+                    
                     // Process the invite code if it exists
                     if (inviteCode) {
                         try {
@@ -76,16 +112,35 @@
 
                     localStorage.removeItem('pendingInviteCode');
 
-                    // Redirect user to home page
-                    alert('Registration successful');
-                    window.location.href = 'home.html';
-
+                    // Show success message if in Telegram
+                    if (tg.initDataUnsafe) {
+                        tg.showPopup({
+                            title: 'Success!',
+                            message: 'Registration successful',
+                            buttons: [{
+                                text: 'Continue',
+                                onClick: () => window.location.href = 'home.html'
+                            }]
+                        });
+                    } else {
+                        window.location.href = 'home.html';
+                    }
                 } else {
-                    alert(data.message || 'Registration failed');
-                }
+                    if (tg.initDataUnsafe) {
+                        tg.showPopup({
+                            title: 'Error',
+                            message: data.message || 'Registration failed'
+                        });
+                    }
+                }        
             } catch (error) {
                 console.error('Error:', error);
-                alert('There was an error with the registration process.');
+                if (tg.initDataUnsafe) {
+                    tg.showPopup({
+                        title: 'Error',
+                        message: 'There was an error with the registration process.'
+                    });
+                }
             }
         });
     </script>
