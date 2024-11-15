@@ -315,7 +315,7 @@ router.post('/ads/user/:userId', authenticateJWT, async (req, res) => {
 
     try {
         // Find the user by userId
-        const user = await User.findById(userId);
+        const user = await User.findByOne(userId);
         if (!user) return res.status(404).json({ message: 'User not found' });
 
         // Award 1000 points for watching an ad
