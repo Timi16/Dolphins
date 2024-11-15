@@ -310,34 +310,43 @@ router.post('/update-game-score',authenticateJWT, async (req, res) => {
     }
 });
 
-router.post('/ads/user/:userId', authenticateJWT, async (req, res) => {
-    const { userId } = req.params;
-
+// Fixed ads reward endpoint
+router.post('/ads/user/:username', authenticateJWT, async (req, res) => {
     try {
-        // Find the user by userId
-        const user = await User.findByOne(userId);
-        if (!user) return res.status(404).json({ message: 'User not found' });
+        const { username } = req.params;
+        
+        // Find user by username instead of userId
+        const user = await User.findOne({ username });
+        
+        if (!user) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'User not found' 
+            });
+        }
 
-        // Award 1000 points for watching an ad
+        // Award 100 points for watching an ad
         user.score += 100;
-
         // Save the updated user data
         await user.save();
 
         // Return the updated user data
-        return res.json({
+        return res.status(200).json({
             success: true,
             data: {
-                userId: user._id,
                 username: user.username,
                 score: user.score,
                 message: '100 points awarded for watching ad'
             }
         });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Server error' });
+        console.error('Error processing ad reward:', err);
+        return res.status(500).json({ 
+            success: false, 
+            message: 'Server error processing ad reward',
+            error: err.message 
+        });
     }
 });
 
-module.exports=router;
+module.exports = router;
