@@ -78,33 +78,34 @@ router.post('/daily-reward', authenticateJWT, async (req, res) => {
         if (!user) return res.status(404).json({ message: 'User not found' });
 
         const today = new Date().setHours(0, 0, 0, 0); // Reset to midnight
-        const lastRewardDate = user.lastDailyRewardDate ? user.lastDailyRewardDate.setHours(0, 0, 0, 0) : null;
+        const lastRewardDate = user.lastDailyRewardDate ? new Date(user.lastDailyRewardDate).setHours(0, 0, 0, 0) : null;
+
+        // Log to check date comparison values
+        console.log('Today:', today, 'Last Reward Date:', lastRewardDate);
 
         // Check if the daily reward was already collected today
         if (lastRewardDate === today) {
             return res.status(400).json({ message: 'Daily reward already collected' });
         }
 
-        // Determine the reward amount based on the user's current day in the reward sequence
+        const dailyRewards = [50, 100, 150, 200, 250, 300, 350, 400, 500]; // Ensure this is declared
         const currentDay = user.currentDay || 1; // Default to day 1 if not set
         const dailyRewardAmount = dailyRewards[(currentDay - 1) % dailyRewards.length];
 
-        // Update user's score and set new reward information
-        user.score += dailyRewardAmount; // Add the reward to the user's score
+        user.score += dailyRewardAmount;
         user.lastDailyRewardDate = new Date(); // Update with today's date
         user.currentDay = currentDay < dailyRewards.length ? currentDay + 1 : 1; // Reset to day 1 if at end of array
-        
+
         await user.save(); // Save the updated user data
 
-        // Respond with the updated score and reward details
         return res.json({
             message: `You have collected ${dailyRewardAmount} points for Day ${currentDay}`,
             newScore: user.score,
             nextDay: user.currentDay
         });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Server error' });
+        console.error('Error claiming daily reward:', err);
+        res.status(500).json({ message: 'Server error', error: err.message });
     }
 });
 

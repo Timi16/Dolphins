@@ -1,11 +1,12 @@
+// Initialize variables from local storage or set default values
 let sowls = parseInt(localStorage.getItem('sowls')) || 0;
 let currentDay = parseInt(localStorage.getItem('currentDay')) || 1;
 let lastClaimDate = localStorage.getItem('lastClaimDate') || "";
 
-// Array of daily rewards
+// Array of daily rewards (same as backend)
 const dailyRewards = [50, 100, 150, 200, 250, 300, 350, 400, 500];
 
-// Function to show popup message
+// Function to show a popup message
 function showPopup(message) {
     const popup = document.getElementById('popup-overlay');
     const popupMessage = document.getElementById('popup-message');
@@ -36,34 +37,38 @@ async function claimDailyReward(day) {
     }
 
     try {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('token'); // Ensure token is fetched correctly
+        const username = localStorage.getItem('username'); // Ensure username is available
+        console.log(token);
+        
+        // Send request to backend to claim daily reward
         const response = await fetch('https://dolphins-ai6u.onrender.com/api/rewards/daily-reward', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': token
             },
-            body: JSON.stringify({ username: localStorage.getItem('username') })
+            body: JSON.stringify({ username }) // Send username in body
         });
 
         const data = await response.json();
 
         if (response.ok) {
-            // Update score and day based on backend response
+            // Update local storage and UI based on backend response
             sowls = data.newScore;
-            currentDay = data.nextDay;  // Sync with backend's currentDay
-            lastClaimDate = currentUtcDate; // Update last claim date to current UTC date
+            currentDay = data.nextDay;
+            lastClaimDate = currentUtcDate;
 
-            // Save values to local storage for consistency
+            // Save values to local storage
             localStorage.setItem('sowls', sowls);
             localStorage.setItem('currentDay', currentDay);
             localStorage.setItem('lastClaimDate', lastClaimDate);
             localStorage.setItem(`day${day}Claimed`, 'true');
 
-            // Show success popup with correct reward amount
+            // Display success message
             showPopup(`Congratulations! You've claimed ${dailyRewards[day - 1]} Dolphins!`);
 
-            // Update the UI based on the new day
+            // Update UI based on the new day
             updateUI();
         } else {
             showPopup(data.message || 'Error claiming daily reward.');
@@ -76,7 +81,6 @@ async function claimDailyReward(day) {
 
 // Function to update the UI based on the current day
 function updateUI() {
-    // Fetch current day from local storage to ensure correct day is unlocked
     const storedCurrentDay = parseInt(localStorage.getItem('currentDay')) || 1;
 
     document.querySelectorAll('.reward-card').forEach((card, index) => {
@@ -88,7 +92,7 @@ function updateUI() {
             card.classList.add('claimed');
             card.style.cursor = 'default';
         } else if (day === storedCurrentDay) {
-            card.classList.add('unlocked');  // Enable claiming only for current day
+            card.classList.add('unlocked');
             card.style.cursor = 'pointer';
         } else {
             card.classList.add('locked');
@@ -97,7 +101,7 @@ function updateUI() {
     });
 }
 
-// Event listener for claiming rewards
+// Add event listeners for claiming rewards
 document.querySelectorAll('.reward-card').forEach((card, index) => {
     card.addEventListener('click', () => {
         const day = index + 1;
