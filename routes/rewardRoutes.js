@@ -313,17 +313,14 @@ router.post('/ads/user/:userId', async (req, res) => {
     const { userId } = req.params;
 
     try {
-        // Find the user by userId
-        const user = await User.findById(userId);
+        // Use findOne instead of findById since we're using UUID strings
+        const user = await User.findOne({ _id: userId });
         if (!user) return res.status(404).json({ message: 'User not found' });
 
-        // Award 1000 points for watching an ad
+        // Award points for watching an ad
         user.score += 100;
-
-        // Save the updated user data
         await user.save();
 
-        // Return the updated user data
         return res.json({
             success: true,
             data: {
@@ -338,5 +335,6 @@ router.post('/ads/user/:userId', async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 });
+
 
 module.exports=router;
