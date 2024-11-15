@@ -97,7 +97,9 @@
     <script>
         const userId = localStorage.getItem("userId"); // Replace with actual user ID logic
         const rewardUrl = `https://dolphins-ai6u.onrender.com/api/rewards/ads/user/${userId}`;
-
+        const token = localStorage.getItem("token");
+        console.log(token);
+        
         // Initialize Adsgram Ad Controller
         const AdController = window.Adsgram.init({ blockId: "5150" });
         // Select the watch ads button
@@ -151,6 +153,7 @@
                     fetch(rewardUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
+                        'Authorization': token,
                         body: JSON.stringify({ rewardStatus: 'completed' })
                     })
                     .then(response => response.json())
