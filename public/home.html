@@ -145,37 +145,41 @@
                 setTimeout(checkAdCooldown, 1000);
             }
         }
-
         watchAdsButton.addEventListener('click', () => {
             if (Date.now() >= nextAdTime) {
                 AdController.show().then((result) => {
                     // Send the reward request to backend
                     fetch(rewardUrl, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        'Authorization': token,
-                        body: JSON.stringify({ rewardStatus: 'completed' })
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': token
+                        }
                     })
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) throw new Error('Failed to update score');
+                        return response.json();
+                    })
                     .then(data => {
-                        // Show popup notification
+                        console.log('Server response:', data); // Log the backend response to verify
                         displayPopup("You have received 100 Points!");
-                        
-                        // Set cooldown
                         nextAdTime = Date.now() + cooldownTime;
                         localStorage.setItem("nextAdTime", nextAdTime);
-                        checkAdCooldown(); // Start cooldown countdown
+                        checkAdCooldown();
                     })
                     .catch(error => {
                         console.error('Error processing reward:', error);
                         alert('There was an error processing the reward.');
                     });
-                }).catch((result) => {
-                    console.error('Ad error:', result);
+                })
+                .catch((error) => {
+                    console.error('Ad error:', error);
                     alert('Ad was not completed or an error occurred.');
                 });
             }
         });
+
+        
 
         // Start the cooldown check on page load
         checkAdCooldown();
