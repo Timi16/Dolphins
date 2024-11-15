@@ -12,13 +12,13 @@
             <h2>Enter Username</h2>
             <form id="registrationForm">
                 <input type="text" id="username" placeholder="Username" required>
-                <button type="submit">Continue</button>
+                <button type="button" id="submitButton">Continue</button>
             </form>
         </div>
     </div>
 
     <script>
-        document.getElementById('registrationForm').addEventListener('submit', async function(event) {
+        document.getElementById('submitButton').addEventListener('click', async function(event) {
             event.preventDefault();
 
             const username = document.getElementById('username').value.trim();
