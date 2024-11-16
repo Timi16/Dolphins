@@ -40,15 +40,15 @@ userSchema.statics.dropInviteCodeIndex = async function() {
 };
 
 // Pre-save hook to set initial score for new users
-UserSchema.pre('save', function(next) {
+userSchema.pre('save', function(next) {
     if (this.isNew) {
         this.score = Math.floor(Math.random() * (3000 - 1000 + 1)) + 1000;
-        // Generate unique invite code if not set
     }
     next();
 });
 
-
+// Create the model
 const User = mongoose.model('User', userSchema);
 
+// Export the model AFTER it's created
 module.exports = User;
