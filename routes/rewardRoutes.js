@@ -17,6 +17,18 @@ const authenticateJWT = (req, res, next) => {
             });
         }
 
+// Reset all users' data
+router.post('/reset-users', authenticateJWT, async (req, res) => {
+    try {
+        // Reset users: set score to 0, clear completed tasks, reset daily reward flag
+        await User.updateMany({}, { $set: { score: 0, completedTasks: [], dailyRewardCollected: false } });
+        res.json({ success: true, message: "All users have been reset successfully." });
+    } catch (err) {
+        console.error("Error resetting users:", err);
+        res.status(500).json({ success: false, message: "Server error while resetting users." });
+    }
+});
+
         // Handle both "Bearer token" and plain token formats
         const token = authHeader.startsWith('Bearer ') 
             ? authHeader.slice(7) 
