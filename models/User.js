@@ -1,43 +1,44 @@
-// User.js
+module.exports = User;
 const mongoose = require('mongoose');
+const crypto = require('crypto');
 
-const UserSchema = new mongoose.Schema({
-    username: { 
-        type: String, 
-        required: true, 
+const userSchema = new mongoose.Schema({
+    username: {
+        type: String,
+        required: true,
         unique: true,
-        trim: true
-    },
-    score: { 
-        type: Number,
-        default: 0
-    },
-    completedTasks: { 
-        type: [String], 
-        default: [] 
-    },
-    dailyRewardCollected: { 
-        type: Boolean, 
-        default: false 
+        trim: true,
+        lowercase: true
     },
     inviteCode: {
         type: String,
         unique: true,
-        sparse: true  // Allows null/undefined values to not count for uniqueness
+        sparse: true,  // This allows multiple documents to have no inviteCode
+        default: () => crypto.randomBytes(6).toString('hex') // Generate a random invite code
     },
-    lastDailyRewardDate: { 
-        type: Date, 
-        default: null 
+    score: {
+        type: Number,
+        default: 0
     },
-    referralsCount: { 
-        type: Number, 
-        default: 0 
+    referredUsers: {
+        type: [String],
+        default: []
     },
-    referredUsers: { 
-        type: [String], 
-        default: [] 
+    referralsCount: {
+        type: Number,
+        default: 0
     }
 });
+
+// If you need to drop the problematic index, you can do it programmatically:
+userSchema.statics.dropInviteCodeIndex = async function() {
+    try {
+        await this.collection.dropIndex('inviteCode_1');
+        console.log('Successfully dropped inviteCode index');
+    } catch (err) {
+        console.log('Error dropping index or index doesn\'t exist:', err);
+    }
+};
 
 // Pre-save hook to set initial score for new users
 UserSchema.pre('save', function(next) {
@@ -48,6 +49,7 @@ UserSchema.pre('save', function(next) {
     next();
 });
 
-const User = mongoose.model('User', UserSchema);
+
+const User = mongoose.model('User', userSchema);
 
 module.exports = User;
