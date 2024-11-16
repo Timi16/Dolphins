@@ -11,45 +11,45 @@ router.post('/register', async (req, res) => {
     const { username, inviteCode } = req.body;
 
     try {
-        // Check if the user already exists
+        // Check for existing username
         const existingUser = await User.findOne({ username });
         if (existingUser) return res.status(400).json({ message: 'User already exists' });
 
-        // Create new user with generated userId
+        // Create a new user
         const newUser = new User({ username });
 
-        // If an invite code is provided, find and update referrer
         if (inviteCode) {
             const referrer = await User.findOne({ inviteCode });
             if (referrer) {
+                referrer.referredUsers = referrer.referredUsers || [];
                 if (!referrer.referredUsers.includes(username)) {
                     referrer.referredUsers.push(username);
-                    referrer.referralsCount++;
+                    referrer.referralsCount += 1;
 
                     if (referrer.referralsCount <= 5) referrer.score += 100;
                     if (referrer.referralsCount === 5) referrer.score += 5000;
                     if (referrer.referralsCount === 10) referrer.score += 10000;
+
                     await referrer.save();
                 }
             }
         }
 
-        // Save the new user to the database
         await newUser.save();
 
-        // Generate a JWT token including the userId
-        const token = jwt.sign({ userId: newUser.userId, username: newUser.username }, JWT_SECRET, { expiresIn: '365d' });
+        const token = jwt.sign({ userId: newUser._id, username: newUser.username }, JWT_SECRET, { expiresIn: '365d' });
 
-        // Send the userId and token back to the client
         return res.status(201).json({
             message: 'User registered successfully',
             token,
-            userId: newUser.userId,
+            userId: newUser._id,
         });
     } catch (err) {
-        return res.status(500).json({ message: 'Server error', error: err });
+        console.error(err);
+        return res.status(500).json({ message: 'Server error' });
     }
 });
+
 
 
 module.exports = router;
