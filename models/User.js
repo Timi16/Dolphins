@@ -26,6 +26,23 @@ const userSchema = new mongoose.Schema({
     referralsCount: {
         type: Number,
         default: 0
+    },
+    // Added fields for rewards system
+    lastDailyRewardDate: {
+        type: Date,
+        default: null
+    },
+    currentDay: {
+        type: Number,
+        default: 1
+    },
+    completedTasks: {
+        type: [String],
+        default: []
+    },
+    dailyRewardCollected: {
+        type: Boolean,
+        default: false
     }
 });
 
