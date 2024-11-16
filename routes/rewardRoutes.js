@@ -109,32 +109,6 @@ router.post('/daily-reward', authenticateJWT, async (req, res) => {
     }
 });
 
-// Generate invite link
-router.get('/generate-invite/:username',authenticateJWT, async (req, res) => {
-    const { username } = req.params;
-
-    try {
-        const user = await User.findOne({ username });
-        if (!user) return res.status(404).json({ message: 'User not found' });
-
-        // Generate a unique invite code using a combination of username and timestamp
-        const timestamp = Date.now();
-        const inviteCode = `${username.toUpperCase()}-${timestamp.toString(36)}`;
-
-        // Save invite code to user
-        user.inviteCode = inviteCode;
-        await user.save();
-
-        // Construct the invite link directly to index.html
-        const inviteLink = `https://t.me/DolphinsProject_Bot?inviteCode=${inviteCode}`;
-
-        res.json({ inviteLink });
-    } catch (err) {
-        console.error('Error generating invite link:', err);
-        res.status(500).json({ message: 'Server error generating invite link' });
-    }
-});
-
 router.get('/user/:username', authenticateJWT, async (req, res) => {
     try {
         const { username } = req.params;
@@ -207,8 +181,41 @@ router.get('/holdersCount',authenticateJWT, async (req, res) => {
     }
 });
 
-// Modify the existing referral route
-router.post('/referral/:inviteCode',authenticateJWT, async (req, res) => {
+// Modified generate-invite endpoint in rewardRoutes.js
+router.get('/generate-invite/:username', authenticateJWT, async (req, res) => {
+    const { username } = req.params;
+
+    try {
+        const user = await User.findOne({ username });
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        // Generate a unique invite code using a combination of username and timestamp
+        const timestamp = Date.now();
+        const inviteCode = `${username.toUpperCase()}-${timestamp.toString(36)}`;
+
+        // Save invite code to user with tracking data
+        user.inviteCode = inviteCode;
+        user.inviteCodeCreatedAt = new Date();
+        user.inviteCodeUsageCount = 0; // Reset usage count for new code
+        await user.save();
+
+        // Construct the invite link
+        const inviteLink = `https://t.me/DolphinsProject_Bot?start=${inviteCode}`;
+
+        res.json({ 
+            inviteLink,
+            inviteCode,
+            createdAt: user.inviteCodeCreatedAt,
+            usageCount: user.inviteCodeUsageCount
+        });
+    } catch (err) {
+        console.error('Error generating invite link:', err);
+        res.status(500).json({ message: 'Server error generating invite link' });
+    }
+});
+
+// Modified referral endpoint in rewardRoutes.js
+router.post('/referral/:inviteCode', authenticateJWT, async (req, res) => {
     const { inviteCode } = req.params;
     const { username } = req.body;
 
@@ -216,53 +223,76 @@ router.post('/referral/:inviteCode',authenticateJWT, async (req, res) => {
         const referrer = await User.findOne({ inviteCode });
         const user = await User.findOne({ username });
 
-        if (!referrer) return res.status(404).json({ message: 'Referrer not found' });
+        if (!referrer) return res.status(404).json({ message: 'Invalid invite code' });
         if (!user) return res.status(404).json({ message: 'User not found' });
 
-        if (referrer.referredUsers.includes(username)) {
-            return res.status(400).json({ message: 'User already referred' });
+        // Check if user already used any invite code
+        if (user.usedInviteCode) {
+            return res.status(400).json({ message: 'User has already used an invite code' });
         }
 
-        referrer.referredUsers.push(username);
-        referrer.referralsCount++;
+        // Update invite code usage tracking
+        referrer.inviteCodeUsageCount += 1;
+        referrer.inviteCodeLastUsed = new Date();
 
-        // Award points for the first 5 referrals
-        if (referrer.referralsCount <= 5) {
-            referrer.score += 100; // 100 points per referral
+        if (!referrer.referredUsers.includes(username)) {
+            referrer.referredUsers.push(username);
+            referrer.referralsCount++;
+
+            // Award points for referrals
+            if (referrer.referralsCount <= 5) {
+                referrer.score += 100;
+            }
+            if (referrer.referralsCount === 5) {
+                referrer.score += 5000;
+            }
+            if (referrer.referralsCount === 10) {
+                referrer.score += 10000;
+            }
+
+            // Mark the invite code as used by this user
+            user.usedInviteCode = inviteCode;
+            await user.save();
             await referrer.save();
 
             return res.json({
-                message: 'Referral successful. You have earned 100 points!',
-                newScore: referrer.score,
-                referralsCount: referrer.referralsCount
+                message: 'Referral successful',
+                referrer: {
+                    username: referrer.username,
+                    newScore: referrer.score,
+                    referralsCount: referrer.referralsCount,
+                    inviteCodeUsageCount: referrer.inviteCodeUsageCount,
+                    lastUsed: referrer.inviteCodeLastUsed
+                }
             });
         }
 
-        if (referrer.referralsCount === 5) {
-            referrer.score += 5000; // Award bonus of 25,000 points
-            await referrer.save();
-
-            return res.json({
-                message: 'Congratulations! You have referred 5 users and earned a bonus of 5,000 points!',
-                newScore: referrer.score,
-                referralsCount: referrer.referralsCount
-            });
-        }
-        if (referrer.referralsCount === 10) {
-            referrer.score += 10000; // Award bonus of 25,000 points
-            await referrer.save();
-
-            return res.json({
-                message: 'Congratulations! You have referred 5 users and earned a bonus of 10,000 points!',
-                newScore: referrer.score,
-                referralsCount: referrer.referralsCount
-            });
-        }
-
-        res.status(400).json({ message: 'Referral limit reached' });
+        return res.status(400).json({ message: 'User already referred' });
     } catch (err) {
-        console.error(err);
+        console.error('Error processing referral:', err);
         res.status(500).json({ message: 'Server error', error: err });
+    }
+});
+
+// New endpoint to get invite code statistics
+router.get('/invite-stats/:username', authenticateJWT, async (req, res) => {
+    const { username } = req.params;
+
+    try {
+        const user = await User.findOne({ username });
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        res.json({
+            inviteCode: user.inviteCode,
+            createdAt: user.inviteCodeCreatedAt,
+            lastUsed: user.inviteCodeLastUsed,
+            usageCount: user.inviteCodeUsageCount,
+            referralsCount: user.referralsCount,
+            referredUsers: user.referredUsers
+        });
+    } catch (err) {
+        console.error('Error fetching invite stats:', err);
+        res.status(500).json({ message: 'Server error fetching invite stats' });
     }
 });
 
