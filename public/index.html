@@ -22,63 +22,64 @@
         // Initialize Telegram WebApp
         const tg = window.Telegram.WebApp;
 
-        window.onload = function() {
-            // Check if both token and username exist in localStorage
+        /**
+         * Redirect function for handling page navigation.
+         * @param {string} url - The destination URL.
+         */
+        function redirectTo(url) {
+            try {
+                if (tg.version && parseFloat(tg.version) >= 6.1) {
+                    tg.showPopup({
+                        title: 'Redirecting...',
+                        message: `You are being redirected to ${url}.`,
+                    });
+                }
+                window.location.href = url;
+            } catch (err) {
+                console.error('Error in redirect function:', err);
+                window.location.href = url; // Fallback if Telegram popup fails
+            }
+        }
+
+        window.onload = function () {
             const token = localStorage.getItem('token');
             const username = localStorage.getItem('username');
             
             if (token && username) {
-                // Redirect to home.html if user is already logged in
-                window.location.href = 'loading.html';
+                redirectTo('loading.html');
             }
 
-            // Check for invite code from Telegram parameters
+            // Handle invite codes from Telegram and URL parameters
             if (tg.initDataUnsafe && tg.initDataUnsafe.start_param) {
-                const inviteCode = tg.initDataUnsafe.start_param;
-                localStorage.setItem('pendingInviteCode', inviteCode);
+                localStorage.setItem('pendingInviteCode', tg.initDataUnsafe.start_param);
             }
 
-            // Check for direct inviteCode in URL parameters
             const urlParams = new URLSearchParams(window.location.search);
             const urlInviteCode = urlParams.get('inviteCode');
             if (urlInviteCode && !localStorage.getItem('pendingInviteCode')) {
                 localStorage.setItem('pendingInviteCode', urlInviteCode);
             }
 
-            // Debug log to check invite code
             console.log('Stored invite code:', localStorage.getItem('pendingInviteCode'));
         };
 
-        document.getElementById('submitButton').addEventListener('click', async function(event) {
+        document.getElementById('submitButton').addEventListener('click', async function (event) {
             event.preventDefault();
 
             const username = document.getElementById('username').value.trim();
-            if (username === "") {
-                try {
-                    if (tg.version && parseFloat(tg.version) >= 6.1) {
-                        tg.showPopup({
-                            title: 'Error',
-                            message: 'Please enter a username',
-                        });
-                    } else {
-                        alert('Please enter a username');
-                    }
-                } catch (err) {
-                    console.error('Popup error:', err);
-                    alert('Please enter a username');
-                }
+            if (!username) {
+                tg.version && parseFloat(tg.version) >= 6.1
+                    ? tg.showPopup({
+                        title: 'Error',
+                        message: 'Please enter a username',
+                    })
+                    : alert('Please enter a username');
                 return;
             }
 
-            // Get the stored invite code if it exists
             const inviteCode = localStorage.getItem('pendingInviteCode');
-            console.log('Processing registration with invite code:', inviteCode);
-            
-            // Prepare request body
             const requestBody = { username };
-            if (inviteCode) {
-                requestBody.inviteCode = inviteCode;
-            }
+            if (inviteCode) requestBody.inviteCode = inviteCode;
 
             try {
                 const response = await fetch('https://dolphins-ai6u.onrender.com/api/user/register', {
@@ -89,23 +90,17 @@
                     body: JSON.stringify(requestBody),
                 });
 
-                if (!response.ok) {
-                    throw new Error(`Server responded with status: ${response.status}`);
-                }
-
+                if (!response.ok) throw new Error(`Server responded with status: ${response.status}`);
                 const data = await response.json();
-                console.log('Registration response:', data);
-                
-                if (data.token && data.userId) {
-                    // Store user data
+
+                if (data.token && data.user) {
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('username', username);
                     localStorage.setItem('completedTasks', JSON.stringify({}));
-                    
-                    // Process the invite code if it exists
+
                     if (inviteCode) {
                         try {
-                            const referralResponse = await fetch(`https://dolphins-ai6u.onrender.com/api/referral/${inviteCode}`, {
+                            await fetch(`https://dolphins-ai6u.onrender.com/api/referral/${inviteCode}`, {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
@@ -113,68 +108,35 @@
                                 },
                                 body: JSON.stringify({ username }),
                             });
-                            const referralData = await referralResponse.json();
-                            console.log('Referral processed:', referralData);
                         } catch (err) {
                             console.error('Error processing referral:', err);
                         }
                     }
 
                     localStorage.removeItem('pendingInviteCode');
-
-                    // Show success message or redirect
-                    try {
-                        if (tg.version && parseFloat(tg.version) >= 6.1) {
-                            tg.showPopup({
-                                title: 'Success!',
-                                message: 'Registration successful',
-                                buttons: [
-                                    {
-                                        text: 'Continue',
-                                        type: 'default',
-                                        onClick: () => window.location.href = 'home.html',
-                                    }
-                                ],
-                            });
-                        } else {
-                            alert('Registration successful!');
-                            window.location.href = 'home.html';
-                        }
-                    } catch (err) {
-                        console.error('Popup error:', err);
-                        alert('Registration successful!');
-                        window.location.href = 'home.html';
-                    }
+                    tg.version && parseFloat(tg.version) >= 6.1
+                        ? tg.showPopup({
+                            title: 'Success!',
+                            message: 'Registration successful',
+                            buttons: [{ text: 'Continue', type: 'default', onClick: () => redirectTo('home.html') }],
+                        })
+                        : redirectTo('home.html');
                 } else {
-                    try {
-                        if (tg.version && parseFloat(tg.version) >= 6.1) {
-                            tg.showPopup({
-                                title: 'Error',
-                                message: data.message || 'Registration failed',
-                            });
-                        } else {
-                            alert(data.message || 'Registration failed');
-                        }
-                    } catch (err) {
-                        console.error('Popup error:', err);
-                        alert(data.message || 'Registration failed');
-                    }
+                    tg.version && parseFloat(tg.version) >= 6.1
+                        ? tg.showPopup({
+                            title: 'Error',
+                            message: data.message || 'Registration failed',
+                        })
+                        : alert(data.message || 'Registration failed');
                 }
             } catch (error) {
                 console.error('Error:', error);
-                try {
-                    if (tg.version && parseFloat(tg.version) >= 6.1) {
-                        tg.showPopup({
-                            title: 'Error',
-                            message: 'There was an error with the registration process.',
-                        });
-                    } else {
-                        alert('There was an error with the registration process.');
-                    }
-                } catch (err) {
-                    console.error('Popup error:', err);
-                    alert('There was an error with the registration process.');
-                }
+                tg.version && parseFloat(tg.version) >= 6.1
+                    ? tg.showPopup({
+                        title: 'Error',
+                        message: 'There was an error with the registration process.',
+                    })
+                    : alert('There was an error with the registration process.');
             }
         });
     </script>
