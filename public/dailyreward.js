@@ -2,12 +2,6 @@
 let sowls = parseInt(localStorage.getItem('sowls')) || 0;
 let currentDay = parseInt(localStorage.getItem('currentDay')) || 1;
 let lastClaimDate = localStorage.getItem('lastClaimDate') || "";
-
-<<<<<<< HEAD
-// Array of daily rewards
-=======
-// Array of daily rewards (same as backend)
->>>>>>> 610f437e3b6acb6ed81ca74ac274652cacc81aa6
 const dailyRewards = [50, 100, 150, 200, 250, 300, 350, 400, 500];
 
 // Function to show a popup message
@@ -60,13 +54,11 @@ async function claimDailyReward(day) {
         if (response.ok) {
             // Update local storage and UI based on backend response
             sowls = data.newScore;
-<<<<<<< HEAD
             currentDay = data.nextDay;  // Sync with backend's currentDay
             lastClaimDate = currentUtcDate; // Update last claim date to current UTC date
-=======
             currentDay = data.nextDay;
             lastClaimDate = currentUtcDate;
->>>>>>> 610f437e3b6acb6ed81ca74ac274652cacc81aa6
+
 
             // Save values to local storage
             localStorage.setItem('sowls', sowls);
@@ -136,8 +128,4 @@ document.getElementById('popup-overlay').addEventListener('click', (e) => {
 
 // Initialize the UI
 updateUI();
-<<<<<<< HEAD
 
-
-=======
->>>>>>> 610f437e3b6acb6ed81ca74ac274652cacc81aa6
