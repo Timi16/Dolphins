@@ -181,6 +181,7 @@ router.get('/holdersCount',authenticateJWT, async (req, res) => {
 });
 
 // Modified generate-invite endpoint in rewardRoutes.js
+// Modified generate-invite endpoint in rewardRoutes.js
 router.get('/generate-invite/:username', authenticateJWT, async (req, res) => {
     const { username } = req.params;
 
@@ -198,8 +199,8 @@ router.get('/generate-invite/:username', authenticateJWT, async (req, res) => {
         user.inviteCodeUsageCount = 0; // Reset usage count for new code
         await user.save();
 
-        // Construct the invite link
-        const inviteLink = `https://t.me/DolphinsProject_Bot?start=${inviteCode}`;
+        // Construct the invite link to point to the web app
+        const inviteLink = `https://t.me/DolphinsProject_Bot/Dolphins/?inviteCode=${inviteCode}`;
 
         res.json({ 
             inviteLink,
@@ -212,6 +213,7 @@ router.get('/generate-invite/:username', authenticateJWT, async (req, res) => {
         res.status(500).json({ message: 'Server error generating invite link' });
     }
 });
+
 
 // Modified referral endpoint in rewardRoutes.js
 router.post('/referral/:inviteCode', authenticateJWT, async (req, res) => {
