@@ -68,25 +68,26 @@
             <span>🐬 Invite 10 friends to Dolphins</span>
             <button id="track-referral-button-10" class="button" onclick="trackReferralStatus(10, 10000)">10000</button>
     </div>
-    <div class="delete-account" onclick="showDeleteConfirmation()">
-        🗑️ Delete My Account
-    </div>
-    
-    <!-- Add modal for confirmation -->
-    <div id="deleteModal" class="modal">
-        <div class="modal-content">
-            <h2>Delete Account</h2>
-            <p>Are you sure you want to delete your account? This action cannot be undone.</p>
-            <div class="modal-buttons">
-                <button class="btn-cancel" onclick="hideDeleteConfirmation()">Cancel</button>
-                <button class="btn-delete" onclick="deleteAccount()">Delete Account</button>
-            </div>
-        </div>
-    </div>
-    
-<br><br>
-<br><br>
+    <!-- Logout Button -->
+    <button id="logoutButton">Log Out</button>
+
+    <!-- Add the script here before the closing body tag -->
+    <script>
+        function logout() {
+            // Clear the local storage
+            localStorage.clear();
+            alert('All data has been cleared');
+            // Redirect to the login page
+            window.location.href = 'index.html';
+        }
+
+        // Add an event listener to the logout button
+        document.getElementById('logoutButton').addEventListener('click', logout);
+    </script>
 <br>
+<br><br>
+<br><br>
+
     <nav class="nav-bar">
         <a href="home.html" class="nav-item active">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -228,56 +229,6 @@
             }
         `;
         document.head.appendChild(style);
-
-
-function showDeleteConfirmation() {
-    document.getElementById('deleteModal').style.display = 'block';
-}
-
-function hideDeleteConfirmation() {
-    document.getElementById('deleteModal').style.display = 'none';
-}
-
-async function deleteAccount() {
-    try {
-        const response = await fetch('https://dolphins-ai6u.onrender.com/api/delete-account', {
-            method: 'POST',
-            headers: {
-                'Authorization': localStorage.getItem('token'),
-                'Content-Type': 'application/json'
-            }
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            // Clear local storage
-            localStorage.removeItem('token');
-            localStorage.removeItem('username');
-            
-            // Show success message
-            alert('Account deleted successfully');
-            
-            // Redirect to login page
-            window.location.href = 'index.html';
-        } else {
-            alert(data.message || 'Failed to delete account');
-        }
-    } catch (err) {
-        console.error('Error deleting account:', err);
-        alert('Failed to connect to server. Please try again.');
-    } finally {
-        hideDeleteConfirmation();
-    }
-}
-
-window.onclick = function(event) {
-    const modal = document.getElementById('deleteModal');
-    if (event.target === modal) {
-        hideDeleteConfirmation();
-    }
-}
-
 
     </script>
 </body>
