@@ -1,6 +1,6 @@
 window.onload = function () {
     const urlParams = new URLSearchParams(window.location.search);
-    const inviteCode = urlParams.get('inviteCode');
+    const inviteCode = urlParams.get('invite') || urlParams.get('inviteCode');
 
     if (inviteCode) {
         handleInviteCode(inviteCode);
@@ -9,10 +9,8 @@ window.onload = function () {
     displayInvitedFriends();
     displayInviteStatistics();
 
-    // Attach event listener to the button
     document.getElementById('invite-link').addEventListener('click', generateInviteLink);
 
-    // Add refresh button listener if it exists
     const refreshButton = document.getElementById('refresh-stats');
     if (refreshButton) {
         refreshButton.addEventListener('click', () => {
@@ -23,13 +21,16 @@ window.onload = function () {
     }
 };
 
-function handleInviteCode(inviteCode) {
+function handleInviteCode(inviteParam) {
     const username = localStorage.getItem('username');
     const token = localStorage.getItem('token');
     if (!username || !token) {
         alert('Please log in to use the invite code.');
         return;
     }
+
+    // Extract the invite code from the URL parameter
+    const inviteCode = inviteParam.startsWith('DLPH-') ? inviteParam : inviteParam.split('=')[1];
 
     fetch(`https://dolphins-ai6u.onrender.com/api/rewards/referral/${inviteCode}`, {
         method: 'POST',
@@ -57,6 +58,7 @@ function handleInviteCode(inviteCode) {
         showNotification('Error: ' + error.message);
     });
 }
+
 
 function checkUserLoggedIn() {
     const username = localStorage.getItem('username');

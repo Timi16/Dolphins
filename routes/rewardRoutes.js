@@ -180,8 +180,6 @@ router.get('/holdersCount',authenticateJWT, async (req, res) => {
     }
 });
 
-// Modified generate-invite endpoint in rewardRoutes.js
-// Modified generate-invite endpoint in rewardRoutes.js
 router.get('/generate-invite/:username', authenticateJWT, async (req, res) => {
     const { username } = req.params;
 
@@ -189,22 +187,23 @@ router.get('/generate-invite/:username', authenticateJWT, async (req, res) => {
         const user = await User.findOne({ username });
         if (!user) return res.status(404).json({ message: 'User not found' });
 
-        // Generate a unique invite code using a combination of username and timestamp
-        const timestamp = Date.now();
-        const inviteCode = `${username.toUpperCase()}-${timestamp.toString(36)}`;
+        // Generate a fixed invite code using user's ID
+        const fixedInviteCode = `DLPH-${user._id}`;
 
-        // Save invite code to user with tracking data
-        user.inviteCode = inviteCode;
-        user.inviteCodeCreatedAt = new Date();
-        user.inviteCodeUsageCount = 0; // Reset usage count for new code
-        await user.save();
+        // Only update if user doesn't already have an invite code
+        if (!user.inviteCode) {
+            user.inviteCode = fixedInviteCode;
+            user.inviteCodeCreatedAt = new Date();
+            user.inviteCodeUsageCount = 0;
+            await user.save();
+        }
 
-        // Construct the invite link to point to the web app
-        const inviteLink = `https://t.me/DolphinsProject_Bot/Dolphins/?inviteCode=${inviteCode}`;
+        // Always use the same format for invite link
+        const inviteLink = `https://t.me/DolphinsProject_Bot/Dolphins/?invite=${user.inviteCode}`;
 
         res.json({ 
             inviteLink,
-            inviteCode,
+            inviteCode: user.inviteCode,
             createdAt: user.inviteCodeCreatedAt,
             usageCount: user.inviteCodeUsageCount
         });
@@ -214,14 +213,15 @@ router.get('/generate-invite/:username', authenticateJWT, async (req, res) => {
     }
 });
 
-
-// Modified referral endpoint in rewardRoutes.js
+// Modified referral endpoint to handle fixed invite codes
 router.post('/referral/:inviteCode', authenticateJWT, async (req, res) => {
     const { inviteCode } = req.params;
     const { username } = req.body;
 
     try {
-        const referrer = await User.findOne({ inviteCode });
+        // Extract user ID from invite code
+        const referrerId = inviteCode.replace('DLPH-', '');
+        const referrer = await User.findById(referrerId);
         const user = await User.findOne({ username });
 
         if (!referrer) return res.status(404).json({ message: 'Invalid invite code' });
@@ -274,6 +274,7 @@ router.post('/referral/:inviteCode', authenticateJWT, async (req, res) => {
         res.status(500).json({ message: 'Server error', error: err });
     }
 });
+
 
 // New endpoint to get invite code statistics
 router.get('/invite-stats/:username', authenticateJWT, async (req, res) => {
