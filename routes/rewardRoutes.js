@@ -16,19 +16,17 @@ const authenticateJWT = (req, res, next) => {
                 message: 'No authorization header' 
             });
         }
-
-// Reset all users' data
+        // Reset all users' data and delete accounts
 router.post('/reset-users', authenticateJWT, async (req, res) => {
     try {
-        // Reset users: set score to 0, clear completed tasks, reset daily reward flag
-        await User.updateMany({}, { $set: { score: 0, completedTasks: [], dailyRewardCollected: false } });
-        res.json({ success: true, message: "All users have been reset successfully." });
+        await User.deleteMany({}); // Delete all user accounts
+        res.json({ success: true, message: "All users have been reset successfully. Please create new accounts." });
     } catch (err) {
         console.error("Error resetting users:", err);
         res.status(500).json({ success: false, message: "Server error while resetting users." });
     }
 });
-
+    
         // Handle both "Bearer token" and plain token formats
         const token = authHeader.startsWith('Bearer ') 
             ? authHeader.slice(7) 
