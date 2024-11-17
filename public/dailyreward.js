@@ -26,19 +26,10 @@ function getCurrentUtcDate() {
 
 // Function to claim daily reward
 async function claimDailyReward(day) {
-    const currentUtcDate = getCurrentUtcDate(); // Get current UTC date
-
-    // Check if the user has already claimed the reward today
-    if (currentUtcDate === lastClaimDate) {
-        showPopup('You have already claimed today\'s reward!');
-        return;
-    }
-
     try {
-        const token = localStorage.getItem('token'); // Ensure token is fetched correctly
-        const username = localStorage.getItem('username'); // Ensure username is available
-        console.log(token);
-        
+        const token = localStorage.getItem('token');
+        const username = localStorage.getItem('username');
+
         // Send request to backend to claim daily reward
         const response = await fetch('https://dolphins-ai6u.onrender.com/api/rewards/daily-reward', {
             method: 'POST',
@@ -46,32 +37,22 @@ async function claimDailyReward(day) {
                 'Content-Type': 'application/json',
                 'Authorization': token
             },
-            body: JSON.stringify({ username }) // Send username in body
+            body: JSON.stringify({ username })
         });
 
         const data = await response.json();
 
         if (response.ok) {
-            // Update local storage and UI based on backend response
             sowls = data.newScore;
-            currentDay = data.nextDay;  // Sync with backend's currentDay
-            lastClaimDate = currentUtcDate; // Update last claim date to current UTC date
             currentDay = data.nextDay;
-            lastClaimDate = currentUtcDate;
 
-
-            // Save values to local storage
             localStorage.setItem('sowls', sowls);
             localStorage.setItem('currentDay', currentDay);
-            localStorage.setItem('lastClaimDate', lastClaimDate);
-            localStorage.setItem(`day${day}Claimed`, 'true');
 
-            // Display success message
             showPopup(`Congratulations! You've claimed ${dailyRewards[day - 1]} Dolphins!`);
-
-            // Update UI based on the new day
             updateUI();
         } else {
+            // Display backend message if claiming is too soon
             showPopup(data.message || 'Error claiming daily reward.');
         }
     } catch (error) {
@@ -79,6 +60,7 @@ async function claimDailyReward(day) {
         showPopup('Failed to claim daily reward. Please try again later.');
     }
 }
+
 
 // Function to update the UI based on the current day
 function updateUI() {

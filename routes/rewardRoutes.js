@@ -78,26 +78,23 @@ router.post('/daily-reward', authenticateJWT, async (req, res) => {
         const user = await User.findOne({ username });
         if (!user) return res.status(404).json({ message: 'User not found' });
 
-        const today = new Date().setHours(0, 0, 0, 0); // Reset to midnight
-        const lastRewardDate = user.lastDailyRewardDate ? new Date(user.lastDailyRewardDate).setHours(0, 0, 0, 0) : null;
+        const lastRewardTime = user.lastDailyRewardDate ? new Date(user.lastDailyRewardDate) : null;
+        const now = new Date();
 
-        // Log to check date comparison values
-        console.log('Today:', today, 'Last Reward Date:', lastRewardDate);
-
-        // Check if the daily reward was already collected today
-        if (lastRewardDate === today) {
-            return res.status(400).json({ message: 'Daily reward already collected' });
+        // Check if 5 minutes have passed since the last reward
+        if (lastRewardTime && now - lastRewardTime < 5 * 60 * 1000) {
+            return res.status(400).json({ message: 'You can claim the reward only once every 5 minutes' });
         }
 
-        const dailyRewards = [50, 100, 150, 200, 250, 300, 350, 400, 500]; // Ensure this is declared
+        const dailyRewards = [50, 100, 150, 200, 250, 300, 350, 400, 500];
         const currentDay = user.currentDay || 1; // Default to day 1 if not set
         const dailyRewardAmount = dailyRewards[(currentDay - 1) % dailyRewards.length];
 
         user.score += dailyRewardAmount;
-        user.lastDailyRewardDate = new Date(); // Update with today's date
+        user.lastDailyRewardDate = now; // Update with the current timestamp
         user.currentDay = currentDay < dailyRewards.length ? currentDay + 1 : 1; // Reset to day 1 if at end of array
 
-        await user.save(); // Save the updated user data
+        await user.save();
 
         return res.json({
             message: `You have collected ${dailyRewardAmount} points for Day ${currentDay}`,
@@ -109,6 +106,7 @@ router.post('/daily-reward', authenticateJWT, async (req, res) => {
         res.status(500).json({ message: 'Server error', error: err.message });
     }
 });
+
 
 router.get('/user/:username', authenticateJWT, async (req, res) => {
     try {
