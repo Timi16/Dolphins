@@ -69,10 +69,8 @@
             <button id="track-referral-button-10" class="button" onclick="trackReferralStatus(10, 10000)">10000</button>
     </div>
     
-     <!-- Admin Actions -->
-     <div class="admin-actions">
-        <button id="reset-button" class="button">Reset All Users</button>
-    </div>
+    <button id="delete-account-button" class="button">Delete My Account</button>
+<br><br>
 <br><br>
 <br>
     <nav class="nav-bar">
@@ -216,11 +214,12 @@
             }
         `;
         document.head.appendChild(style);
-    const resetButton = document.getElementById('reset-button');
 
-    resetButton.addEventListener('click', () => {
-        if (confirm("Are you sure you want to reset all users? This action cannot be undone.")) {
-            fetch('https://dolphins-ai6u.onrender.com/api/reset-users', {
+    const deleteAccountButton = document.getElementById('delete-account-button');
+
+    deleteAccountButton.addEventListener('click', () => {
+        if (confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
+            fetch('https://dolphins-ai6u.onrender.com/api/delete-account', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -230,25 +229,23 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert("All users have been reset successfully.");
+                    alert("Your account has been deleted successfully.");
                     
-                    // Clear all user data from localStorage
+                    // Clear user data from local storage
                     localStorage.clear();
-                    
+
                     // Redirect to the registration page
-                    window.location.href = "index.html";
+                    window.location.href = "register.html";
                 } else {
-                    alert(`Failed to reset users: ${data.message}`);
+                    alert(`Failed to delete account: ${data.message}`);
                 }
             })
             .catch(error => {
-                console.error("Error resetting users:", error);
-                alert("An error occurred while resetting users.");
+                console.error("Error deleting account:", error);
+                alert("An error occurred while deleting your account.");
             });
         }
     });
-
-         
 
     </script>
 </body>

@@ -16,17 +16,30 @@ const authenticateJWT = (req, res, next) => {
                 message: 'No authorization header' 
             });
         }
-        // Reset all users' data and delete accounts
-router.post('/reset-users', authenticateJWT, async (req, res) => {
+        // Delete the current user's account
+router.post('/delete-account', authenticateJWT, async (req, res) => {
     try {
-        await User.deleteMany({}); // Delete all user accounts
-        res.json({ success: true, message: "All users have been reset successfully. Please create new accounts." });
+        // Get the username from the authenticated JWT token
+        const { username } = req.user;
+
+        // Find and delete the user
+        const deletedUser = await User.findOneAndDelete({ username });
+        if (!deletedUser) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        return res.json({
+            success: true,
+            message: "Your account has been deleted successfully.",
+        });
     } catch (err) {
-        console.error("Error resetting users:", err);
-        res.status(500).json({ success: false, message: "Server error while resetting users." });
+        console.error("Error deleting user account:", err);
+        res.status(500).json({ success: false, message: "Server error while deleting account." });
     }
 });
-    
+
+
+
         // Handle both "Bearer token" and plain token formats
         const token = authHeader.startsWith('Bearer ') 
             ? authHeader.slice(7) 
