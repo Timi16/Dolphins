@@ -3,10 +3,6 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const rewardRoutes = require('./routes/rewardRoutes');
-require('dotenv').config();
-app.use('/api', require('./routes/rewardRoutes'));
-app.use('/api', rewardRoutes);
-
 
 const app = express();
 
