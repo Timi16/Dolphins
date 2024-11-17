@@ -340,7 +340,7 @@ router.post('/update-game-score',authenticateJWT, async (req, res) => {
 });
 
 // Fixed ads reward endpoint
-router.post('/ads/user/:username', authenticateJWT, async (req, res) => {
+router.post('/ads/user/:userId', authenticateJWT, async (req, res) => {
     try {
         const { username } = req.params;
         
