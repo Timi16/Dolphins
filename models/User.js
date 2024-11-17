@@ -1,31 +1,64 @@
 const mongoose = require('mongoose');
-const { v4: uuidv4 } = require('uuid');
-const TelegramSchema = new mongoose.Schema({
-    userId: { type: String, default: uuidv4 },
-    username: { type: String, required: true, unique: true },
-    score: { type: Number },  // Remove the default value
-    completedTasks: { type: [String], default: [] },
-    dailyRewardCollected: { type: Boolean, default: false },
-    inviteCode: {
+const crypto = require('crypto');
+
+const userSchema = new mongoose.Schema({
+    username: {
         type: String,
+        required: true,
         unique: true,
+        trim: true,
+        lowercase: true
     },
-    lastDailyRewardDate: { type: Date, default: null },
-    referralsCount: { type: Number, default: 0 },
-    referredUsers: { type: [String], default: [] },
+    inviteCode: {
+        type: String
+    },
+    inviteCodeUsageCount: { 
+        type: Number, 
+        default: 0 
+    },
+    inviteCodeLastUsed: Date,
+    inviteCodeCreatedAt: Date,
+    score: {
+        type: Number,
+        default: 0
+    },
+    referredUsers: {
+        type: [String],
+        default: []
+    },
+    referralsCount: {
+        type: Number,
+        default: 0
+    },
+    // Added fields for rewards system
+    lastDailyRewardDate: {
+        type: Date,
+        default: null
+    },
+    currentDay: {
+        type: Number,
+        default: 1
+    },
+    completedTasks: {
+        type: [String],
+        default: []
+    },
+    dailyRewardCollected: {
+        type: Boolean,
+        default: false
+    }
 });
 
-// Pre-save hook to generate a random score
-TelegramSchema.pre('save', function(next) {
+// Pre-save hook to set initial score for new users
+userSchema.pre('save', function(next) {
     if (this.isNew) {
-        // Generate a random score between 1000 and 3000
         this.score = Math.floor(Math.random() * (3000 - 1000 + 1)) + 1000;
     }
     next();
 });
 
-const TelegramModel = mongoose.model('Telegram', TelegramSchema);
+// Create the model
+const User = mongoose.model('User', userSchema);
 
-module.exports = TelegramModel;
-
-
+// Export the model AFTER it's created
+module.exports = User;
