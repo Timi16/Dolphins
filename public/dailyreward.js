@@ -2,6 +2,8 @@
 let sowls = parseInt(localStorage.getItem('sowls')) || 0;
 let currentDay = parseInt(localStorage.getItem('currentDay')) || 1;
 let lastClaimDate = localStorage.getItem('lastClaimDate') || "";
+
+// Array of daily rewards (same as backend)
 const dailyRewards = [50, 100, 150, 200, 250, 300, 350, 400, 500];
 
 // Function to show a popup message
@@ -45,14 +47,20 @@ async function claimDailyReward(day) {
         if (response.ok) {
             sowls = data.newScore;
             currentDay = data.nextDay;
+            lastClaimDate = getCurrentUtcDate();
 
+            // Update local storage
             localStorage.setItem('sowls', sowls);
             localStorage.setItem('currentDay', currentDay);
+            localStorage.setItem('lastClaimDate', lastClaimDate);
+            localStorage.setItem(`day${day}Claimed`, 'true'); // Mark the day as claimed
 
+            // Show success message
             showPopup(`Congratulations! You've claimed ${dailyRewards[day - 1]} Dolphins!`);
+
+            // Update UI
             updateUI();
         } else {
-            // Display backend message if claiming is too soon
             showPopup(data.message || 'Error claiming daily reward.');
         }
     } catch (error) {
@@ -60,7 +68,6 @@ async function claimDailyReward(day) {
         showPopup('Failed to claim daily reward. Please try again later.');
     }
 }
-
 
 // Function to update the UI based on the current day
 function updateUI() {
@@ -70,35 +77,50 @@ function updateUI() {
         const day = index + 1;
         const isClaimed = localStorage.getItem(`day${day}Claimed`) === 'true';
 
+        // Reset classes to prevent duplication
         card.classList.remove('claimed', 'unlocked', 'locked');
+
         if (isClaimed) {
+            // Mark as claimed
             card.classList.add('claimed');
             card.style.cursor = 'default';
         } else if (day === storedCurrentDay) {
+            // Mark as unlocked for the current day
             card.classList.add('unlocked');
             card.style.cursor = 'pointer';
         } else {
+            // Mark as locked for future days
             card.classList.add('locked');
             card.style.cursor = 'not-allowed';
         }
     });
+
+    // Reattach event listeners to ensure proper behavior
+    attachEventListeners();
 }
 
-// Add event listeners for claiming rewards
-document.querySelectorAll('.reward-card').forEach((card, index) => {
-    card.addEventListener('click', () => {
-        const day = index + 1;
-        const isClaimed = localStorage.getItem(`day${day}Claimed`) === 'true';
+// Function to attach event listeners to reward cards
+function attachEventListeners() {
+    document.querySelectorAll('.reward-card').forEach((card, index) => {
+        // Remove any existing event listener to prevent duplication
+        card.replaceWith(card.cloneNode(true));
 
-        if (!isClaimed && day === currentDay) {
-            claimDailyReward(day);
-        } else if (isClaimed) {
-            showPopup('You have already claimed this reward!');
-        } else if (day !== currentDay) {
-            showPopup('This reward is not available yet!');
-        }
+        // Reattach the event listener to the cloned element
+        const newCard = document.querySelectorAll('.reward-card')[index];
+        newCard.addEventListener('click', () => {
+            const day = index + 1;
+            const isClaimed = localStorage.getItem(`day${day}Claimed`) === 'true';
+
+            if (!isClaimed && day === currentDay) {
+                claimDailyReward(day);
+            } else if (isClaimed) {
+                showPopup('You have already claimed this reward!');
+            } else if (day !== currentDay) {
+                showPopup('This reward is not available yet!');
+            }
+        });
     });
-});
+}
 
 // Add event listeners for popup
 document.getElementById('close-popup').addEventListener('click', hidePopup);
@@ -110,4 +132,5 @@ document.getElementById('popup-overlay').addEventListener('click', (e) => {
 
 // Initialize the UI
 updateUI();
+
 
