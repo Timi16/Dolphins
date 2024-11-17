@@ -1,3 +1,4 @@
+// leaderboard.js
 // Function to generate a random color
 function getRandomColor() {
     const letters = '0123456789ABCDEF';
@@ -80,8 +81,25 @@ window.onload = function() {
         data.forEach(user => {
             const listItem = document.createElement('li');
             listItem.classList.add('leaderboard-item');
+            
+            // Get medal based on rank
+            let medalDisplay;
+            switch(user.rank) {
+                case 1:
+                    medalDisplay = '<div class="medal gold">🥇</div>';
+                    break;
+                case 2:
+                    medalDisplay = '<div class="medal silver">🥈</div>';
+                    break;
+                case 3:
+                    medalDisplay = '<div class="medal bronze">🥉</div>';
+                    break;
+                default:
+                    medalDisplay = `<div class="medal">${user.rank}</div>`;
+            }
+
             listItem.innerHTML = `
-                <div class="medal">${user.rank}</div>
+                ${medalDisplay}
                 <div class="user-avatar" style="background-color: ${getRandomColor()}">${user.username.slice(0, 2).toUpperCase()}</div>
                 <div class="user-info">
                     <div class="user-name">${user.username}</div>

@@ -91,3 +91,35 @@ body {
     height: 24px;
     margin-bottom: 4px;
 }
+/* Add these styles to leaderboard.css */
+.medal {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 10px;
+    font-size: 24px;
+}
+
+.medal.gold {
+    color: #FFD700;
+}
+
+.medal.silver {
+    color: #C0C0C0;
+}
+
+.medal.bronze {
+    color: #CD7F32;
+}
+
+/* Update the existing .leaderboard-item style to better accommodate medals */
+.leaderboard-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    padding: 10px;
+    background-color: #1a1a1a;
+    border-radius: 10px;
+}
