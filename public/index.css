@@ -7,6 +7,35 @@ body {
     padding-bottom: 60px;
 }
 
+/* Styling the logout button */
+#logoutButton {
+    padding: 15px 30px;
+    font-size: 18px;
+    color: white;
+    background-color: #f11d0a;  /* A red/orange color */
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+/* Button hover effect */
+#logoutButton:hover {
+    background-color: #f7260a; /* Darker red/orange */
+    transform: scale(1.05);
+}
+
+/* Button focus effect */
+#logoutButton:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(255, 111, 97, 0.5);  /* Light red outline */
+}
+
+/* For accessibility, increase contrast when the button is focused */
+#logoutButton:active {
+    background-color: #d14e3f;
+}
+
 .container {
     max-width: 400px;
     margin: 0 auto;
