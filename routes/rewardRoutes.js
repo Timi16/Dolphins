@@ -342,11 +342,13 @@ router.post('/update-game-score',authenticateJWT, async (req, res) => {
 // Fixed ads reward endpoint
 router.post('/ads/user/:userId', authenticateJWT, async (req, res) => {
     try {
-        const { username } = req.params;
-        
-        // Find user by username instead of userId
-        const user = await User.findOne({ username });
-        
+        // Extract userId from route parameters
+        const { userId } = req.params;
+
+        // Find user by MongoDB-generated _id
+        const user = await User.findById(userId);
+
+        // Check if user exists
         if (!user) {
             return res.status(404).json({ 
                 success: false, 
@@ -356,6 +358,7 @@ router.post('/ads/user/:userId', authenticateJWT, async (req, res) => {
 
         // Award 100 points for watching an ad
         user.score += 100;
+
         // Save the updated user data
         await user.save();
 
@@ -363,6 +366,7 @@ router.post('/ads/user/:userId', authenticateJWT, async (req, res) => {
         return res.status(200).json({
             success: true,
             data: {
+                id: user._id,
                 username: user.username,
                 score: user.score,
                 message: '100 points awarded for watching ad'
@@ -377,5 +381,6 @@ router.post('/ads/user/:userId', authenticateJWT, async (req, res) => {
         });
     }
 });
+
 
 module.exports = router;

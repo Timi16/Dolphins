@@ -71,6 +71,7 @@ router.post('/register', async (req, res) => {
             message: 'User registered successfully',
             token,
             user: {
+                id: newUser._id,
                 username: newUser.username,
                 score: newUser.score,
                 inviteCode: newUser.inviteCode

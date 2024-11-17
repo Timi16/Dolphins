@@ -146,6 +146,7 @@
                 if (data.token && data.user) {
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('username', username);
+                    localStorage.setItem('userId', data.user.id);
                     localStorage.setItem('completedTasks', JSON.stringify({}));
 
                     if (inviteCode) {
