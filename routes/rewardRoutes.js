@@ -199,7 +199,7 @@ router.get('/generate-invite/:username', authenticateJWT, async (req, res) => {
         }
 
         // Always use the same format for invite link
-        const inviteLink = `https://dolphins-ai6u.onrender.com?invite=${user.inviteCode}`;
+        const inviteLink = `https://dolphins-ai6u.onrender.com/?inviteCode=${user.inviteCode}`;
 
         res.json({ 
             inviteLink,
