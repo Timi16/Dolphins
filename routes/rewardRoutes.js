@@ -74,29 +74,40 @@ router.post('/daily-reward', authenticateJWT, async (req, res) => {
     const { username } = req.body;
 
     try {
+        // Fetch the user
         const user = await User.findOne({ username });
         if (!user) return res.status(404).json({ message: 'User not found' });
 
-        const now = new Date();
-        const lastRewardTime = user.lastDailyRewardDate ? new Date(user.lastDailyRewardDate) : null;
-        const dailyRewards = [50, 100, 150, 200, 250, 300, 350, 400, 500];
-        const maxDay = dailyRewards.length;
+        const now = new Date(); // Current time in UTC
+        const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())); // Today's date at 12 AM UTC
+        const lastRewardDate = user.lastDailyRewardDate
+            ? new Date(Date.UTC(
+                new Date(user.lastDailyRewardDate).getUTCFullYear(),
+                new Date(user.lastDailyRewardDate).getUTCMonth(),
+                new Date(user.lastDailyRewardDate).getUTCDate()
+              ))
+            : null;
 
-        // Allow claiming once per minute (testing)
-        if (lastRewardTime && now - lastRewardTime < 1 * 60 * 1000) {
-            return res.status(400).json({ message: 'You can claim the reward only once every minute for testing.' });
+        // Check if reward has already been claimed today
+        if (lastRewardDate && lastRewardDate.toDateString() === today.toDateString()) {
+            return res.status(400).json({ message: 'Reward already claimed for today.' });
         }
 
+        // Define daily rewards and determine the current reward
+        const dailyRewards = [50, 100, 150, 200, 250, 300, 350, 400, 500];
+        const maxDay = dailyRewards.length;
         const currentDay = user.currentDay || 1;
         const dailyRewardAmount = dailyRewards[(currentDay - 1) % maxDay];
 
-        // Update user information
+        // Update user data
         user.score += dailyRewardAmount;
-        user.lastDailyRewardDate = now;
-        user.currentDay = currentDay < maxDay ? currentDay + 1 : 1;
+        user.lastDailyRewardDate = now; // Update last claimed time
+        user.currentDay = currentDay < maxDay ? currentDay + 1 : 1; // Reset to Day 1 after max days
 
+        // Save changes
         await user.save();
 
+        // Send response
         return res.json({
             message: `You have collected ${dailyRewardAmount} points for Day ${currentDay}`,
             newScore: user.score,
