@@ -1,4 +1,4 @@
-// Initialize variables from local storage or set default values
+// Initialize variables
 let sowls = parseInt(localStorage.getItem('sowls')) || 0;
 let currentDay = parseInt(localStorage.getItem('currentDay')) || 1;
 let lastClaimDate = localStorage.getItem('lastClaimDate') || "";
@@ -20,26 +20,20 @@ function hidePopup() {
     popup.classList.add('hidden');
 }
 
-// Function to get today's UTC date in YYYY-MM-DD format
-function getCurrentUtcDate() {
-    const now = new Date();
-    return now.toISOString().split('T')[0]; // Returns YYYY-MM-DD
-}
-
-// Function to claim daily reward
+// Function to claim daily reward based on backend
 async function claimDailyReward(day) {
     try {
         const token = localStorage.getItem('token');
         const username = localStorage.getItem('username');
 
-        // Send request to backend to claim daily reward
+        // Request daily reward from the backend
         const response = await fetch('https://dolphins-ai6u.onrender.com/api/rewards/daily-reward', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': token
+                'Authorization': token,
             },
-            body: JSON.stringify({ username })
+            body: JSON.stringify({ username }),
         });
 
         const data = await response.json();
@@ -47,13 +41,15 @@ async function claimDailyReward(day) {
         if (response.ok) {
             sowls = data.newScore;
             currentDay = data.nextDay;
-            lastClaimDate = getCurrentUtcDate();
+
+            // Reset UI and local storage after completing Day 9
+            if (currentDay === 1) {
+                resetUI();
+            }
 
             // Update local storage
             localStorage.setItem('sowls', sowls);
             localStorage.setItem('currentDay', currentDay);
-            localStorage.setItem('lastClaimDate', lastClaimDate);
-            localStorage.setItem(`day${day}Claimed`, 'true'); // Mark the day as claimed
 
             // Show success message
             showPopup(`Congratulations! You've claimed ${dailyRewards[day - 1]} Dolphins!`);
@@ -69,7 +65,17 @@ async function claimDailyReward(day) {
     }
 }
 
-// Function to update the UI based on the current day
+// Function to reset the UI
+function resetUI() {
+    localStorage.setItem('currentDay', 1);
+    dailyRewards.forEach((_, index) => {
+        localStorage.removeItem(`day${index + 1}Claimed`);
+    });
+    currentDay = 1; // Reset current day
+    updateUI();
+}
+
+// Function to update the UI
 function updateUI() {
     const storedCurrentDay = parseInt(localStorage.getItem('currentDay')) || 1;
 
@@ -77,35 +83,28 @@ function updateUI() {
         const day = index + 1;
         const isClaimed = localStorage.getItem(`day${day}Claimed`) === 'true';
 
-        // Reset classes to prevent duplication
         card.classList.remove('claimed', 'unlocked', 'locked');
 
         if (isClaimed) {
-            // Mark as claimed
             card.classList.add('claimed');
             card.style.cursor = 'default';
         } else if (day === storedCurrentDay) {
-            // Mark as unlocked for the current day
             card.classList.add('unlocked');
             card.style.cursor = 'pointer';
         } else {
-            // Mark as locked for future days
             card.classList.add('locked');
             card.style.cursor = 'not-allowed';
         }
     });
 
-    // Reattach event listeners to ensure proper behavior
     attachEventListeners();
 }
 
 // Function to attach event listeners to reward cards
 function attachEventListeners() {
     document.querySelectorAll('.reward-card').forEach((card, index) => {
-        // Remove any existing event listener to prevent duplication
         card.replaceWith(card.cloneNode(true));
 
-        // Reattach the event listener to the cloned element
         const newCard = document.querySelectorAll('.reward-card')[index];
         newCard.addEventListener('click', () => {
             const day = index + 1;
@@ -132,5 +131,6 @@ document.getElementById('popup-overlay').addEventListener('click', (e) => {
 
 // Initialize the UI
 updateUI();
+
 
 

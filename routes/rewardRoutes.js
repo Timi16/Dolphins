@@ -70,7 +70,6 @@ router.post('/complete-task',authenticateJWT, async (req, res) => {
     }
 });
 
-// Modify /daily-reward endpoint
 router.post('/daily-reward', authenticateJWT, async (req, res) => {
     const { username } = req.body;
 
@@ -78,34 +77,37 @@ router.post('/daily-reward', authenticateJWT, async (req, res) => {
         const user = await User.findOne({ username });
         if (!user) return res.status(404).json({ message: 'User not found' });
 
-        const lastRewardTime = user.lastDailyRewardDate ? new Date(user.lastDailyRewardDate) : null;
         const now = new Date();
+        const lastRewardTime = user.lastDailyRewardDate ? new Date(user.lastDailyRewardDate) : null;
+        const dailyRewards = [50, 100, 150, 200, 250, 300, 350, 400, 500];
+        const maxDay = dailyRewards.length;
 
-        // Check if 5 minutes have passed since the last reward
-        if (lastRewardTime && now - lastRewardTime < 5 * 60 * 1000) {
-            return res.status(400).json({ message: 'You can claim the reward only once every 5 minutes' });
+        // Allow claiming once per minute (testing)
+        if (lastRewardTime && now - lastRewardTime < 1 * 60 * 1000) {
+            return res.status(400).json({ message: 'You can claim the reward only once every minute for testing.' });
         }
 
-        const dailyRewards = [50, 100, 150, 200, 250, 300, 350, 400, 500];
-        const currentDay = user.currentDay || 1; // Default to day 1 if not set
-        const dailyRewardAmount = dailyRewards[(currentDay - 1) % dailyRewards.length];
+        const currentDay = user.currentDay || 1;
+        const dailyRewardAmount = dailyRewards[(currentDay - 1) % maxDay];
 
+        // Update user information
         user.score += dailyRewardAmount;
-        user.lastDailyRewardDate = now; // Update with the current timestamp
-        user.currentDay = currentDay < dailyRewards.length ? currentDay + 1 : 1; // Reset to day 1 if at end of array
+        user.lastDailyRewardDate = now;
+        user.currentDay = currentDay < maxDay ? currentDay + 1 : 1;
 
         await user.save();
 
         return res.json({
             message: `You have collected ${dailyRewardAmount} points for Day ${currentDay}`,
             newScore: user.score,
-            nextDay: user.currentDay
+            nextDay: user.currentDay,
         });
     } catch (err) {
         console.error('Error claiming daily reward:', err);
         res.status(500).json({ message: 'Server error', error: err.message });
     }
 });
+
 
 
 router.get('/user/:username', authenticateJWT, async (req, res) => {
