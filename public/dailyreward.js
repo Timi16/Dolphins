@@ -20,7 +20,7 @@ function hidePopup() {
     popup.classList.add('hidden');
 }
 
-// Function to claim daily reward based on backend
+// Function to claim daily reward
 async function claimDailyReward(day) {
     try {
         const token = localStorage.getItem('token');
@@ -39,10 +39,14 @@ async function claimDailyReward(day) {
         const data = await response.json();
 
         if (response.ok) {
+            // Update local variables with backend data
             sowls = data.newScore;
             currentDay = data.nextDay;
 
-            // Reset UI and local storage after completing Day 9
+            // Mark reward as claimed in local storage
+            localStorage.setItem(`day${day}Claimed`, 'true');
+
+            // Reset UI if last day is reached
             if (currentDay === 1) {
                 resetUI();
             }
@@ -54,7 +58,7 @@ async function claimDailyReward(day) {
             // Show success message
             showPopup(`Congratulations! You've claimed ${dailyRewards[day - 1]} Dolphins!`);
 
-            // Update UI
+            // Refresh the UI
             updateUI();
         } else {
             showPopup(data.message || 'Error claiming daily reward.');
@@ -85,7 +89,6 @@ function resetUI() {
     updateUI(); // Reinitialize UI
 }
 
-
 // Function to update the UI
 function updateUI() {
     const storedCurrentDay = parseInt(localStorage.getItem('currentDay')) || 1;
@@ -98,6 +101,7 @@ function updateUI() {
         card.classList.remove('claimed', 'unlocked', 'locked');
 
         if (isClaimed) {
+            // Add 'claimed' class to visually show the green double check mark
             card.classList.add('claimed');
             card.style.cursor = 'default';
         } else if (day === storedCurrentDay) {
@@ -111,7 +115,6 @@ function updateUI() {
 
     attachEventListeners(); // Ensure event listeners are reattached
 }
-
 
 // Function to attach event listeners to reward cards
 function attachEventListeners() {
