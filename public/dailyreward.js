@@ -67,13 +67,24 @@ async function claimDailyReward(day) {
 
 // Function to reset the UI
 function resetUI() {
+    // Reset current day to 1 in localStorage
     localStorage.setItem('currentDay', 1);
+
+    // Clear claimed statuses from localStorage
     dailyRewards.forEach((_, index) => {
         localStorage.removeItem(`day${index + 1}Claimed`);
     });
+
+    // Clear UI styles for all reward cards
+    document.querySelectorAll('.reward-card').forEach((card) => {
+        card.classList.remove('claimed', 'unlocked', 'locked');
+        card.style.cursor = 'not-allowed'; // Default state
+    });
+
     currentDay = 1; // Reset current day
-    updateUI();
+    updateUI(); // Reinitialize UI
 }
+
 
 // Function to update the UI
 function updateUI() {
@@ -83,6 +94,7 @@ function updateUI() {
         const day = index + 1;
         const isClaimed = localStorage.getItem(`day${day}Claimed`) === 'true';
 
+        // Reset all classes
         card.classList.remove('claimed', 'unlocked', 'locked');
 
         if (isClaimed) {
@@ -97,8 +109,9 @@ function updateUI() {
         }
     });
 
-    attachEventListeners();
+    attachEventListeners(); // Ensure event listeners are reattached
 }
+
 
 // Function to attach event listeners to reward cards
 function attachEventListeners() {
