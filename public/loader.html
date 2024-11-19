@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            background-color: black;
+            color: white;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .progress-container {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            max-width: 300px;
+            line-height: 50px;
+        }
+
+        .progress-bar {
+            flex-grow: 1;
+            height: 9px;
+            background-color: #555;
+            position: relative;
+            overflow: hidden;
+            border-radius: 4px;
+        }
+
+        .progress-bar::before {
+            content: "";
+            position: absolute;
+            height: 100%;
+            width: 0;
+            background-color: #0077b6;
+            animation: progress-fill 5s ease-in-out forwards;
+        }
+
+        @keyframes progress-fill {
+            0% {width: 0;}
+            100% {width: 100%;}
+        }
+
+        .progress-check {
+            margin-left: 10px;
+            font-size: 18px;
+            color: #0077b6;
+            opacity: 0;
+            animation: show-check 0.5s ease-in-out 5s forwards;
+        }
+
+        @keyframes show-check {
+            0% {opacity: 0;}
+            100% {opacity: 1;}
+        }
+
+        @media (max-width: 360px) {
+            .progress-container {
+                width: 90%;
+            }
+            .progress-check {
+                font-size: 16px;
+            }
+        }
+
+        h1 {
+            position: relative;
+            bottom: 130px;
+            font-size: 1.5rem;
+        }
+
+        button {
+            background-color: #0077b6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            position: relative;
+            top: 70px;
+            border-radius: 8px;
+            width: 300px;
+        }
+    </style>
+</head>
+<body>
+    <div class="allthecontent">
+        <div>
+            <h1>Checking your account</h1>
+            <div>
+                <div>Account Age Verified</div>
+                <div class="progress-container">
+                    <div class="progress-bar"></div>
+                    <div class="progress-check">✓</div>
+                </div>
+                <div>New Account Bonus Point</div>
+                <div class="progress-container">
+                    <div class="progress-bar"></div>
+                    <div class="progress-check">✓</div>
+                </div>
+                <div>Referrals</div>
+                <div class="progress-container">
+                    <div class="progress-bar"></div>
+                    <div class="progress-check">x</div>
+                </div>
+                <div>Telegram Checked</div>
+                <div class="progress-container">
+                    <div class="progress-bar"></div>
+                    <div class="progress-check">✓</div>
+                </div>
+            </div>
+            <button>Continue</button>
+        </div>
+    </div>
+</body>
+</html>
