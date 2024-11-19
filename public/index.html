@@ -30,6 +30,7 @@
         window.onload = function () {
             const token = localStorage.getItem('token');
             const username = localStorage.getItem('username');
+            const formBox = document.getElementById('loginForm');
             const isFirstTime = localStorage.getItem('isFirstTime') === 'true';  // Check if it's the first-time registration
             
             if (token && username) {
@@ -38,7 +39,9 @@
                     redirectTo('loader.html');
                 } else {
                     // Otherwise, go to home.html
+                    formBox.style.display = 'none';
                     redirectTo('loading.html');
+                    return;
                 }
             }
 
