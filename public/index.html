@@ -30,9 +30,16 @@
         window.onload = function () {
             const token = localStorage.getItem('token');
             const username = localStorage.getItem('username');
+            const isFirstTime = localStorage.getItem('isFirstTime') === 'true';  // Check if it's the first-time registration
             
             if (token && username) {
-                redirectTo('loader.html');
+                // If user is logged in and it's their first time, redirect to loader.html
+                if (isFirstTime) {
+                    redirectTo('loader.html');
+                } else {
+                    // Otherwise, go to home.html
+                    redirectTo('home.html');
+                }
             }
 
             if (tg.initDataUnsafe && tg.initDataUnsafe.start_param) {
@@ -61,7 +68,7 @@
             const requestBody = { username };
             if (inviteCode) requestBody.inviteCode = inviteCode;
 
-            // No spinner, we just directly redirect
+            // Directly send the registration request
             try {
                 const response = await fetch('https://dolphins-ai6u.onrender.com/api/user/register', {
                     method: 'POST',
@@ -80,6 +87,9 @@
                     localStorage.setItem('userId', data.user.id);
                     localStorage.setItem('completedTasks', JSON.stringify({}));
 
+                    // If the user is registering for the first time, set the flag
+                    localStorage.setItem('isFirstTime', 'true');
+
                     if (inviteCode) {
                         try {
                             await fetch(`https://dolphins-ai6u.onrender.com/api/referral/${inviteCode}`, {
@@ -97,7 +107,7 @@
 
                     localStorage.removeItem('pendingInviteCode');
 
-                    // Redirect to loader.html after registration is successful
+                    // Redirect to loader.html only if it's the first-time registration
                     redirectTo('loader.html');
                 } else {
                     console.error('Registration failed:', data.message || 'Unknown error');
@@ -109,3 +119,4 @@
     </script>
 </body>
 </html>
+

@@ -105,6 +105,7 @@
     <script>
         // Redirect back to home.html after 10 seconds
         setTimeout(function () {
+            localStorage.setItem('isFirstTime', 'false'); // After first-time registration, prevent showing loader again
             window.location.href = 'home.html';
         }, 8000);
     </script>
