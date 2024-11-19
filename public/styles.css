@@ -4,6 +4,79 @@
     box-sizing: border-box;
     font-family: Arial, sans-serif;
 }
+body {
+    background-color: black;
+    color: white;
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+  }
+  
+  .progress-container {
+    display: flex;
+    align-items: center;
+    width: 100%; /* Responsive width for all screen sizes */
+    max-width: 300px; /* Restrict max width on larger screens */
+    line-height: 50px;
+  }
+  
+  .progress-bar {
+    flex-grow: 1;
+    height: 9px;
+    background-color: #555;
+    position: relative;
+    overflow: hidden;
+    border-radius: 4px;
+  }
+  
+  .progress-bar::before {
+    content: "";
+    position: absolute;
+    height: 100%;
+    width: 0;
+    background-color: #0077b6;
+    animation: progress-fill 5s ease-in-out forwards;
+  }
+  
+  @keyframes progress-fill {
+    0% {
+      width: 0;
+    }
+    100% {
+      width: 100%;
+    }
+  }
+  
+  .progress-check {
+    margin-left: 10px;
+    font-size: 18px;
+    color: #0077b6;
+    opacity: 0;
+    animation: show-check 0.5s ease-in-out 5s forwards;
+  }
+  
+  @keyframes show-check {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+  
+    .progress-check {
+      font-size: 16px; /* Slightly smaller text */
+    }
+  
+  h1{
+    position: relative;
+    bottom: 130px;
+    font-size: 1.5rem;
+  }
+
 
 body {
     height: 100vh;
@@ -20,6 +93,19 @@ body {
     height: 100%;
 }
 
+button {
+    background-color: #0077b6;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 8px;
+    margin-top: 20px;
+    display: block;
+    width: 300px;
+    margin: auto;
+}
 .form-box {
     background-color: #1c1c1e; /* Dark grey background */
     padding: 20px 30px;

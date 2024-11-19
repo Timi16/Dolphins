@@ -73,19 +73,6 @@
             bottom: 130px;
             font-size: 1.5rem;
         }
-
-        button {
-            background-color: #0077b6;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-            position: relative;
-            top: 70px;
-            border-radius: 8px;
-            width: 300px;
-        }
     </style>
 </head>
 <body>
@@ -114,8 +101,12 @@
                     <div class="progress-check">✓</div>
                 </div>
             </div>
-            <button>Continue</button>
-        </div>
     </div>
+    <script>
+        // Redirect back to home.html after 10 seconds
+        setTimeout(function () {
+            window.location.href = 'home.html';
+        }, 8000);
+    </script>
 </body>
 </html>
