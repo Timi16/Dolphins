@@ -18,9 +18,11 @@
         .progress-container {
             display: flex;
             align-items: center;
-            width: 100%;
-            max-width: 300px;
+            width: 200%;
+            max-width: 350px;
             line-height: 50px;
+            position: relative;
+            right: 40px;
         }
 
         .progress-bar {
@@ -73,6 +75,10 @@
             bottom: 130px;
             font-size: 1.5rem;
         }
+        Account Age Verified{
+            position: relative;
+            left: 50px;
+        }
     </style>
 </head>
 <body>
@@ -80,22 +86,22 @@
         <div>
             <h1>Checking your account</h1>
             <div>
-                <div>Account Age Verified</div>
+                <div style="position: relative; right: 40px;">Account Age Verified</div>
                 <div class="progress-container">
                     <div class="progress-bar"></div>
                     <div class="progress-check">✓</div>
                 </div>
-                <div>New Account Bonus Point</div>
+                <div style="position: relative; right: 40px;">New Account Bonus Point</div>
                 <div class="progress-container">
                     <div class="progress-bar"></div>
                     <div class="progress-check">✓</div>
                 </div>
-                <div>Referrals</div>
+                <div style="position: relative; right: 40px;">Referrals</div>
                 <div class="progress-container">
                     <div class="progress-bar"></div>
                     <div class="progress-check">x</div>
                 </div>
-                <div>Telegram Checked</div>
+                <div style="position: relative; right: 40px;">Telegram Checked</div>
                 <div class="progress-container">
                     <div class="progress-bar"></div>
                     <div class="progress-check">✓</div>
@@ -107,7 +113,7 @@
         setTimeout(function () {
             localStorage.setItem('isFirstTime', 'false'); // After first-time registration, prevent showing loader again
             window.location.href = 'home.html';
-        }, 8000);
+        }, 118000);
     </script>
 </body>
 </html>
